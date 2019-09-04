@@ -1,0 +1,45 @@
+package main
+
+@include "test/std.dv";
+
+class Usuario{
+
+    string nombre;
+    int anios;
+
+    string toString(){
+        return "Usuario@{nombre:"+this.nombre+",años:"+std_itos(this.anios)+"}";
+    }
+
+    Usuario construct(string n,int a){
+        this.nombre = n;
+        this.anios = a;
+        return this;
+    }
+}
+
+{
+    void main(string[]args){
+        int cantidad,x;
+        Usuario u;
+        Usuario [] users;
+
+        cantidad = 10;
+        users = new Usuario[cantidad];
+
+        x = 0;
+        while (x < (cantidad)) {
+            users[x] = new Usuario("Usuario "+std_itos(x),x);
+            x = x + 1;
+        }
+      
+      
+        x = cantidad-1;
+        while x >= 0 {
+            println(users[x].toString());
+            x = x -1;
+        }
+
+    }
+
+}

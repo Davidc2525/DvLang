@@ -1,0 +1,40 @@
+
+package main 
+
+class Addr{
+	int a;
+	int b;
+	int c;
+	int d;
+}
+class Coneccion{
+
+	int port;
+	Addr dir;
+	int conectado;
+
+}
+{
+	Coneccion nuevaCon(Addr dir,int port)
+	Coneccion con;
+	int x;
+	{
+		con = new Coneccion();
+		con.dir = dir;
+		con.port = port;
+
+		x = 0;
+		while(x < 1000){
+			x=x+1;
+		}
+		if(con.dir.a >= 192){
+			con.conectado = 1;
+		}else{
+			con.conectado = 0;
+		}
+		return con;
+
+	}
+	
+}
+

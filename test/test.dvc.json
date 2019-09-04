@@ -1,0 +1,139 @@
+{
+    "signature": "DVVM",
+    "main": 34,
+    "size": 49,
+    "strings": [
+        "x: "
+    ],
+    "libs_symbols": [
+        {
+            "lib_name": "/home/david/DvLangVM/src/libs_std/std/libstd.so",
+            "symbols": [
+                {
+                    "name": "std_itos",
+                    "argc": 1
+                },
+                {
+                    "name": "println",
+                    "argc": 1
+                },
+                {
+                    "name": "println_ref",
+                    "argc": 1
+                },
+                {
+                    "name": "print",
+                    "argc": 1
+                },
+                {
+                    "name": "strlen",
+                    "argc": 1
+                },
+                {
+                    "name": "std_u_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_malloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_calloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_realloc",
+                    "argc": 2
+                },
+                {
+                    "name": "std_free",
+                    "argc": 1
+                }
+            ]
+        },
+        {
+            "lib_name": "/home/david/DvLangVM/src/libs_std/net/libnet.so",
+            "symbols": [
+                {
+                    "name": "net_create_socket",
+                    "argc": 2
+                },
+                {
+                    "name": "net_accept",
+                    "argc": 1
+                },
+                {
+                    "name": "net_read",
+                    "argc": 3
+                },
+                {
+                    "name": "net_send",
+                    "argc": 2
+                },
+                {
+                    "name": "net_write",
+                    "argc": 2
+                },
+                {
+                    "name": "net_connect",
+                    "argc": 2
+                }
+            ]
+        }
+    ],
+    "code": [
+        26,
+        1,
+        1,
+        11,
+        0,
+        0,
+        0,
+        31,
+        27,
+        28,
+        26,
+        1,
+        1,
+        39,
+        0,
+        11,
+        0,
+        0,
+        0,
+        41,
+        80,
+        0,
+        1,
+        31,
+        11,
+        0,
+        0,
+        1,
+        1,
+        0,
+        10,
+        41,
+        27,
+        28,
+        26,
+        0,
+        0,
+        0,
+        1,
+        0,
+        1,
+        0,
+        1,
+        0,
+        10,
+        41,
+        27,
+        28,
+        29
+    ]
+}

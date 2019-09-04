@@ -1,0 +1,62 @@
+package main
+@include "test/std.dv";
+//Razor light-> somewhere else
+
+{
+
+
+	
+	int sumaMachine(int a, int b){
+		int r;
+		mcode begin
+            LDA 0  //carga a
+			LDA 1  //carga b
+			ADD    // carga a+b
+			STORE 2 // r = a+b
+		end
+
+		return r;
+	}
+
+	int arlen(int [] a){
+		int len;
+		len = 0;
+
+		mcode begin
+           LDA 0
+           ALEN 
+           STORE 1
+		end
+
+		return len;
+	}
+
+	void main(string[]args){
+		int a,b,r;
+		
+		a = 20;
+		b = 5;
+
+		//r = sumaMachine();
+		mcode begin
+			LDA 1  //carga a
+			LDA 2  //carga b
+
+			ICONST 88 //direccion de la funcion sumaMachine
+			CALL 	  //llama a sumaMachine
+			
+			STORE 3  // almacena en r lo q la funcione retorna
+		end
+
+		if(r == 25){
+			println("20 + 5: "+std_itos(r));
+		}else{
+			println("r = "+std_itos(r));
+		}
+
+
+		
+		println("fin");
+	}
+
+}

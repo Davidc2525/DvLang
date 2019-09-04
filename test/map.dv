@@ -1,0 +1,106 @@
+package main
+@include "test/std.dv";
+int a;
+//Razor light-> somewhere else
+class MapSS {
+
+	int size;
+	int index;
+	int [] indexs;
+	string [] keys;
+	string [] values;
+
+	int indexOfKey(string key){
+		int x,index,found;
+		found = 0;
+		x = 0;
+
+		index = -1;
+		while x < this.size - 1 {
+			
+			if(str_equal(key,this.keys[x]) == 1){
+				return x;
+			}
+
+			x = x+1;
+		}
+
+		return index;
+	}
+
+	void put(string key, string value){
+		int tmp_index,index;
+
+		tmp_index = this.indexOfKey(key);
+		
+		if(tmp_index==-1){ //si no existe
+			index = this.index;
+			this.index = this.index +1;
+		}else{ // si existe se respeta
+			index = tmp_index;
+		}
+
+		this.keys[index] = key;
+		this.values[index] = value;
+
+	}
+
+	string get(string key){
+		int index;
+		index = this.indexOfKey(key);
+		//println("index: "+index);
+		if(index == -1){
+			println(key+" no found");
+		}else{
+			return this.values[index];
+		}
+
+		return "";
+	}
+
+	MapSS construct(int size){
+		this.keys = new string[size];
+		this.values = new string[size];
+		this.indexs = new int[size];
+		this.index = 0;
+		this.size = size;
+
+		return this;
+	}
+
+}
+{
+
+	int t2(){
+		return 5;
+	}
+	int t1(){
+		 t2();
+		 return 25;
+	}
+	void main(string[]args){
+		
+		println("Iniciando mapa");
+
+		MapSS map;
+		map = new MapSS(20);
+
+		map.put("david","David Colmenares");
+		map.put("luisa","Luisa Gomes");
+		map.put("maria","Maria Juana");
+
+		println("en mapa: "+map.get("david"));
+		
+		map.put("david","David Colmenares 2");
+		println("el item 'david' fue modificado");
+
+		println("en mapa: "+map.get("david"));
+		println("en mapa: "+map.get("maria"));
+		println("en mapa: "+map.get("luisa")+" <3");
+
+		println("fin");
+
+		t1();// se hace pop por q la funcion retorna algo y no se usa
+	}
+
+}

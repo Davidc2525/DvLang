@@ -1,0 +1,103 @@
+{
+    "signature": "DVVM",
+    "main": 26,
+    "size": 42,
+    "strings": [
+        ""
+    ],
+    "libs_symbols": [
+        {
+            "lib_name": "/home/david/DvLangVM/src/libs_std/std/libstd.so",
+            "symbols": [
+                {
+                    "name": "std_itos",
+                    "argc": 1
+                },
+                {
+                    "name": "println",
+                    "argc": 1
+                },
+                {
+                    "name": "println_ref",
+                    "argc": 1
+                },
+                {
+                    "name": "print",
+                    "argc": 1
+                },
+                {
+                    "name": "strlen",
+                    "argc": 1
+                },
+                {
+                    "name": "std_u_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_malloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_calloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_realloc",
+                    "argc": 2
+                },
+                {
+                    "name": "std_free",
+                    "argc": 1
+                }
+            ]
+        }
+    ],
+    "code": [
+        26,
+        1,
+        1,
+        11,
+        0,
+        0,
+        0,
+        31,
+        27,
+        28,
+        26,
+        2,
+        2,
+        39,
+        0,
+        11,
+        0,
+        11,
+        1,
+        1,
+        0,
+        0,
+        41,
+        80,
+        27,
+        28,
+        26,
+        0,
+        0,
+        0,
+        5,
+        0,
+        5,
+        0,
+        10,
+        41,
+        0,
+        1,
+        31,
+        27,
+        28,
+        29
+    ]
+}

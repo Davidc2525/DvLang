@@ -1,0 +1,75 @@
+package net
+
+@include "test/net.dv";
+@include "test/std.dv";
+
+class Connection {
+
+	int sock;
+	int readed;
+
+	Read read(int size)
+	{
+		Read data;
+
+		data = net_read_o(this.sock, size);
+		this.readed = this.readed + data.len;
+		return data;
+
+	}
+
+	Connection construct(int sock){
+
+		this.sock = sock;
+
+		println("New connection: "+this.sock);
+		return this;
+	}
+
+	string toString(){
+
+		return "Connection@{sock:"+std_itos(this.sock)+",readed:"+std_itos(this.readed)+"}";
+
+	}
+
+
+}
+
+class Socket{
+
+	int sock;
+
+
+	Connection accept()
+	{	
+		println("aceptando");
+		Connection con;
+		int sock_con;
+
+		sock_con = net_accept(this.sock);
+		con = new Connection(sock_con);
+		return con;
+	}
+
+	Socket construct(string adr, int port){
+
+		this.sock = net_create_socket(adr, port);
+		println("crendo nuevo socket: "+adr+" "+std_itos(port));
+		println("new Socket: "+this.sock);
+		return this;
+	}
+
+	string toString(){
+
+		return "Socket@{sock:"+std_itos(this.sock)+"}";
+
+	}
+
+
+}
+
+{
+
+
+	
+}

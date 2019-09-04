@@ -1,0 +1,12 @@
+package main {
+		/**
+		* suma dos numeros y devuelve una cadena con el resultado
+		* @param a numero 1
+		* @param b numero 2
+		* @author David
+		*/
+		string suma (int a, int b){
+			return itos(a+b);
+		}
+
+}

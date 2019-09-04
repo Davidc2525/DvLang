@@ -1,0 +1,55 @@
+package main
+@include "test/std.dv";
+{   
+    void main(string[] args){
+        int x;
+
+        x = 25;
+
+        println("Primera comparacion");
+
+        if x == 25
+            println("x es igual a 25");
+        
+
+
+        x = 26;
+
+        println("Segunda comparacion");
+
+        if x == 25 
+            println("x es igual a 25");
+        else
+            println("x es diferente a 25");
+        
+       
+       
+        x = 27;
+
+        println("Tercera comparacion");
+
+        if x == 25 {
+            println("x es igual a 25");
+        } else {
+            println("x es diferente a 25");
+        }
+
+        //bucle
+        
+        println("---------- Incrementar x ----------");
+
+        x = 1;
+        while x <= 10 {
+            println("Valor de x: "+std_itos(x));
+            x = x + 1;
+        }
+
+        println("---------- Decrementar x ----------");
+
+        x = 10;
+        while x >= 1 {
+            println("Valor de x: "+std_itos(x));
+            x = x - 1;
+        }
+    }
+}

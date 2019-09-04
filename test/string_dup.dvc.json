@@ -1,0 +1,46 @@
+{
+	"signature": "DVVM",
+	"main": 0,
+    "size": 25,
+    "strings": [
+        "David colmenares",
+        "\n\nCaracteres que tiene tu nombre: ",
+        "Maquina virtual DvVm."
+    ],
+	"code": [
+            26,0,
+               
+                39,0,
+                40,
+                35,
+                6,
+
+                39,1,
+                40,
+                35,
+                6,
+
+                39,0,
+                35,
+                7,
+                  
+                39,1,
+                75,
+                39,0,
+                75,
+		
+		39,2,
+		12,5,
+		
+		11,5,
+		40,
+		35,
+		6,
+
+		11,5,
+		75,
+            27,
+            28,
+            29
+	]
+}

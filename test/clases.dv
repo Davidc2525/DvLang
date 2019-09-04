@@ -1,0 +1,259 @@
+package main
+
+@include "test/net.dv";
+@load_lib "/home/david/DvLangVM/src/libs_std/std/libstd.so";
+//@load_lib "/home/david/DvLangVM/src/libs_std/net/libnet.so";
+/*
+class A2D{//array de 2 dimenciones, de int
+
+	int [] a;
+	int rows;
+	int cols;
+
+	meth void insert(int row, int col, int value){
+		this.a[row+(this.cols*col)] = value;
+	} 
+
+	meth int getIn(int row, int col){
+		return this.a[row+(this.cols*col)];
+	}
+
+	meth int[] getRow(int row)
+	int [] r;
+	int x;
+	{
+		r = new int[this.cols];
+		x = 0;
+		while(x < this.cols){
+			r[x] = this.getIn(row,x);
+			x = x + 1;
+		}
+		return r;
+	}
+
+	meth A2D construct(int rows,int cols){
+		this.rows = rows;
+		this.cols = cols;
+		this.a = new int[this.rows*this.cols];
+
+		return this;
+	}
+}
+
+class Stack{
+
+
+	int [] heap;
+	int sp;
+	int size;
+
+	meth void push(int val){
+		if(this.sp - 1 > this.size){
+			// stack overflow
+		}
+		this.heap[this.sp] = val;
+		this.sp = this.sp + 1;
+
+	}
+	meth int pop()
+	int r;
+	{
+		this.sp = this.sp - 1;
+		if(this.sp < 0 ){
+			//stack underflow
+			this.sp = 0;
+		}
+		r = this.heap[this.sp];
+		return r;
+	}
+
+	meth Stack construct(int size){
+		this.size = size;
+		this.heap = new int[size];
+		this.sp = 0;
+		return this;
+	}
+
+}
+
+class Clase{
+
+	int port;
+	int sum;	
+
+
+	meth int nc1(){
+		return this.port;
+	}
+	
+	meth int nc2(int a, int b)
+	{
+		print(this.nc1()+a+b);
+		return this.port;
+	}
+
+	meth Clase construct(int a,int size)
+	int x;
+	int [] nc;
+	{
+		this.port = a;
+		nc = new int[size];
+		x = 0;
+		while(x < size){
+			nc[x] = x;
+			//print(x);
+			x=x+1;
+		}
+		x = 0;
+		while(x < size){
+			this.sum = this.sum + nc[x];
+			//print(this.sum);
+			x = x + 1;
+		}
+
+		return this;
+	}
+
+}
+
+*/
+
+class Read{
+	string data;
+	int len;
+}
+{
+	
+	
+	 /**
+    * dormir sec segundos
+    */
+    native int std_sleep(int sec);
+    /**
+    * dormir usec minisegundos
+    */
+    native int std_u_sleep(int usec);
+    native int std_free(sring s);
+
+     /**
+    * Native println, imprime str y al final coloca un salto de linea
+    */
+    native int println(string str);
+
+    native string std_itos(int number);
+    string itos(int number)
+    string r;
+    {
+    	r = std_itos(number);
+        return r;
+    }
+    void leer_y_escribir(int soc,int c)
+    string buff;
+   	Read data;
+    {
+        data = net_read_o(soc,10000);
+        
+        //println("mensaje recibido:  "+c);
+        println(data.data+" len: "+data.len);
+        std_free(data.data);
+        std_free(data);
+
+        
+        /*int n;
+        string * buf;
+        
+        */
+        //println(itos(c));
+        
+        //net_send(soc,"mensaje servidor "+c);
+        
+        //std_u_sleep(100);
+        
+        leer_y_escribir(soc,c+1);
+    }
+   
+
+    
+	void main(int [] args)
+	int x;	
+	Stack s;
+	string msg;
+	int c;
+	{
+		
+		msg = "numero: ";
+
+        //leer_y_escribir(net_accept(net_create_socket("orchi",2525)),0);        
+		
+		leer_y_escribir(net_accept(net_create_socket("orchi",2525)),0);       
+		print(c);
+		x = 0;
+		while(x < 1){
+			if(x%10000==0){
+				println("x: " + x + " x*x: " +(x*x) );
+			}
+			
+			
+			
+			x=x+1;
+		}		
+		/*s = new Stack(10000);
+
+		x = 0;
+		while(x < 9999){
+			
+			s.push(x);
+			
+			x=x+1;
+		}
+*/
+		
+		
+		/*size = 1000;
+		a2d = new A2D(size,size);
+		x = 0;
+		while(x < size){
+			
+			y = 0;
+			while(y < size){
+				a2d.insert(x,y,x*y);
+				y=y+1;
+			}
+			x=x+1;
+		}
+
+		x = 0;
+		while(x < size){
+			
+			print(a2d.getRow(x));
+			//print(this.sum);
+			x = x + 1;
+		}
+*/
+
+		/*a = new Clase[5];// lista de 5 elemtos tipo Clase
+		
+		
+		c = new Clase(25,1);// objeto tipo Clase
+		//c.port = 25;
+		x = 0;
+		while(x < 5){
+			a[x] = c;
+			x=x+1;
+		}
+
+		print(c.nc1());
+
+		c = new Clase(25,10);// objeto tipo Clase
+		print(c.sum);*/
+
+		//c.nc2(2,2);
+		//print(c.nc2(2,2));
+		//print(suma(c));
+
+	}
+
+	
+
+
+}

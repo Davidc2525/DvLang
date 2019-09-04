@@ -1,0 +1,103 @@
+package main
+@include "test/std.dv";
+int ga,gb;//2 globales
+class Heap {
+
+	int [] h;
+	int size;
+
+	int get(int index){
+		return this.h[index];
+	}
+
+	void put(int index, int value){
+		this.h[index] = value;
+	}
+
+	Heap construct(int size){
+
+		this.h = new int[size];
+		this.size = size;
+		return this;
+	}
+
+}
+
+class Stack{
+
+
+	int [] heap;
+	int sp;
+	int size;
+
+	void push(int val){
+		if(this.sp - 1 > this.size){
+			// stack overflow
+		}
+		this.heap[this.sp] = val;
+		this.sp = this.sp + 1;
+
+	}
+	int pop()
+	{
+	int r;
+		println("sp: "+std_itos(this.sp));
+		this.sp = this.sp - 1;
+		if(this.sp < 0 ){
+			println("stack underflow: "+std_itos(this.sp));
+			this.sp = 0;
+		}
+		r = this.heap[this.sp];
+		return r;
+	}
+
+	Stack construct(int size){
+		this.size = size;
+		this.heap = new int[size];
+		this.sp = 0;
+		return this;
+	}
+
+}
+
+{   
+    int show1(int a,int b,int c){
+        return a+b+c;
+    }
+    int show2(int a,int b,int c){
+        return show1(a,b,c);
+    }
+
+    int recur(int a,int b){
+
+        if a > 10 return a;
+        
+        return recur(a+1,b);
+
+
+    }
+    void sa(){
+        println("void");
+    }
+    int main(string[] args){
+
+       ga = 1;
+       gb = 2;
+       
+       Stack st;
+       println("stack");
+       st = new Stack(100);
+       println("stack");
+
+       println("pushing");
+       st.push(25);
+       println("pushed");
+       println("poping");
+       println("poped: "+st.pop());
+
+       sa();
+
+    return 1;
+        
+    }
+}

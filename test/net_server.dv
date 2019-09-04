@@ -1,0 +1,27 @@
+package main
+
+@include "test/net_lib.dv";//orientado a objetos
+@include "test/std.dv";
+
+{   
+   
+    void main(string[]args){
+        Socket server;
+        Connection con;
+        Read data;
+
+
+        server = new Socket("orchi",2525);
+        println("server creado");
+        con = server.accept();
+        int x;
+        x = 0;
+        while(1==1){
+
+            data = con.read(100);
+            println("x: "+std_itos(x)+", "+data.data);
+            x=x+1;
+        }   
+
+    }
+}

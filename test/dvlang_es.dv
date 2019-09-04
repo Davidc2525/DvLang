@@ -1,0 +1,21 @@
+
+
+paquete principal
+
+clase U{
+    int a;
+
+}
+{
+    int suma(int a,int b){
+        retornar a+b;
+    }
+    nada principal(string[]argumentos){
+
+        U u;
+        u = nuevo U();
+        u.a = 25;
+        imprimir(suma(u.a,5));
+    }
+
+}

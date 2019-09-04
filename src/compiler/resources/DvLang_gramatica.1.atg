@@ -1,0 +1,1113 @@
+#include<iostream>
+#include <process/Instructions.h>
+#include <numbers/numbers.h>
+#include "../compiler/generate/symbol_table/symbol_table.h"
+#include "../compiler/generate/code_generator/code_generator.h"
+using namespace std;
+using namespace DVLANG::COMPILER_::GENERATE;
+using namespace PROCESS;
+
+class lib_load_info{
+  public:
+    bool load_any = false;
+    string name;
+};
+
+typedef  void(*type_f)(string) ;
+
+
+COMPILER Program
+	SymbolTable   *tab;
+  CodeGenerator   *code;
+  void * _p;
+  Obj * curMethod;
+
+  lib_load_info  * lib_info = new lib_load_info;
+
+  /*eliminar comillas de la cadena*/
+  string onlyContent(string str){
+    return str.substr(1,str.length()-2);
+  }
+    
+  bool isMethodDecl(){
+
+    if(la->kind==_llopen){
+      return true;
+    }
+
+    return false;
+  }
+
+ 
+  bool followedByColon(){
+    cout<<"followedByColon"<<endl;
+    Token * x = la;
+
+    while(x->kind == _ident || x->kind == _comma||x->kind == _bopen || x->kind == _bclose ){
+      cout<<"next: "<<x->kind<<endl;
+      x = scanner->Peek();
+    }
+    
+    cout<<"IsColon: "<< (x->kind == _colon)<<" curr: "<<x->kind<<" t: "<<t->kind<<endl;
+    return x->kind == _colon; 
+  }
+  bool followedBySinte(){
+    cout<<"followedByColon"<<endl;
+    Token * x = la;
+
+    while(x->kind == _ident || x->kind == _comma || x->kind == _colon||x->kind == _bopen || x->kind == _bclose ){
+      cout<<"next: "<<x->kind<<endl;
+      x = scanner->Peek();
+    }
+    
+    return x->kind == _sinte; 
+  }
+
+  
+  bool NextTokenIsType() {
+    if (la->kind != _ident) return false;
+    Obj* obj = tab->find(coco_string_create_char(la->val));
+    cout<<"|||||||||||||||||||||----- NextTokenIsType: "<<coco_string_create_char(la->val)<<" is type?: "<<(obj->kind == Obj::Type)<<endl;
+    return obj->kind == Obj::Type;
+  }
+
+  void RelationExpr(Operand*x){
+    if(x->fromExprType==Operand::OneExpr){
+      code->load(x);
+    
+      code->put(ICONST);
+      code->put(0);
+    
+      code->put(CMPI);
+      code->put(JLE);
+      code->put(0);
+    }else{
+
+      if(x->relaExprSub==1){ // restar cuando es: a >= b seia a >= b-1
+        code->put(ICONST);
+        code->put(1);
+        code->put(SUB);
+      }
+      code->put(CMPI);
+      code->put(x->relaExprOp);
+      code->put(0);
+    }
+  }
+
+  void FunctionCall(Operand * x){
+
+    if(x->obj->native){
+      cout<<" Native call: "<<x->obj->native_id<<endl;
+      code->put(ICONST);
+      code->put(x->obj->native_id);
+      code->put(NCALL);
+
+      if (x->obj->type == tab->noType){
+        cout<<"                         FUNCTION NO TYPE, POPING"<<endl;
+        code->put(POP);
+      }
+    }else{
+      cout<<" Call: "<<x->obj->adr<<endl;
+      code->put(ICONST);
+      code->put(x->adr);
+      code->put(CALL_S);
+    }
+  }
+CHARACTERS
+
+    tab           = '\u0009'. /*  9 = tabulator */
+    lf            = '\u000a'. /* 10 = line feed */
+    cr            = '\u000d'. /* 13 = carriage return */
+
+   //letter = 'a'..'z' + 'A'..'Z'.
+   //digit = '0'..'9'.
+   whiteSpace = ' ' + '\t' + '\r' +'\n'.
+   char = ANY - "'" - '\\' - whiteSpace.
+
+   stringChar    = ANY - "\"" - '\\' - cr - lf.
+
+   zero          = '0'.
+   zeroToThree   = zero + "123" .
+   octalDigit    = zero + "1234567" .
+   nonZeroDigit  = "123456789".
+   digit         = '0' + nonZeroDigit .
+   hexDigit      = digit + "ABCDEFabcdef" .
+   letter        = 'A' .. 'Z' + 'a' .. 'z' + '_' + '$'.
+   
+TOKENS
+
+ident = letter {letter | digit | "_" }.
+number = digit {digit}.
+
+charConst = "'" char "'". //including '\r', '\t', '\n
+stringConst =
+    "\"" { stringChar
+         | "\\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "\'" | "\\"
+                | "u" { "u" } hexDigit hexDigit hexDigit hexDigit
+                | zeroToThree [ octalDigit ] [ octalDigit ]
+                | octalDigit [ octalDigit ]
+                )
+         }
+    "\"".
+
+floatLit =
+    "." digit {digit}
+    [("e" | "E") ["+" | "-"] digit {digit}]
+    [ "F" | "f" | "D" | "d" ]
+  | digit {digit}
+    ( "." {digit}
+      [("e" | "E" ) ["+" | "-"] digit {digit} ]
+      [ "F" | "f" | "D" | "d" ]
+    | ("e" | "E") ["+" | "-"] digit {digit}
+      [ "F" | "f" | "D" | "d" ]
+    | "F" | "f" | "D" | "d"
+    ).
+
+//program= "program".
+//keywords 
+class= "class".
+if= "if".
+else= "else".
+while= "while".
+print= "print".
+return= "return".
+void= "void".
+final= "final".
+new= "new".
+package= "package".
+//read= "read".
+comma = ",".
+colon = ";".
+llopen = "{".
+llclose = "}".
+bopen = "[".
+bclose = "]".
+popen = "(".
+pclose = ")".
+sinte = "?".
+
+EOL = "\n" .
+comment = "#" { letter } .
+
+
+/*PRAGMAS
+    option = '#' {letter}  . (. std::cout<<t->val<<" "<<la->val<<std::endl; .)
+*/
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO "\n"
+
+IGNORE whiteSpace
+
+
+PRODUCTIONS
+
+  Program = package ident 
+  (. Obj *vd = new Obj();  .) 
+  ( [LoadExp] [LibLoad] ) 
+  (. /*tab->openScope();*/ .)
+  {ConstDecl | VarDecl<vd> | ClassDecl}
+  "{"  {FuncDecl|NativeDecl} "}" 
+  (. /*tab->closeScope(); ajustar para cuando coloke el beta de los paketes*/  .).
+
+
+
+  ConstDecl (. Struct * type = new Struct(0); .)
+	= "final" Type<type> ident "=" (number | stringConst) ";".
+  
+  Type<Struct * type> (. string name_type;  int is_arr = 0;  int is_fun = 0; .)
+    =
+        ["fun" (. is_fun = 1; .)]
+        ident (. name_type = string(coco_string_create_char(t->val)); .)
+        ["[" "]" (. is_arr = 1; .)] 
+        (.  
+        	Struct * _type = tab->find(name_type)->type;
+        	
+        	*type = *_type;
+
+        	if(is_arr == 1){
+            Struct * _t = new Struct(Struct::Arr);
+            _t->elemType = new Struct(_type->kind);
+            _t->elemType->assign(_type);
+            *type = *_t;
+          }
+
+          if(is_fun == 1){
+            cout<<"------- posible argumento funcion: "<<name_type<<endl;
+        		Struct * _t = new Struct(Struct::Func);
+        		_t->elemType = new Struct(_type->kind);
+        		*type = *_t;
+        	}
+
+         
+         .)
+  .
+
+  
+   VarDecl<Obj * vd> (.   Struct * _type = new Struct(0); .)
+  = Type<_type>  (.cout<<"vd type: "<<_type->kind<<endl;;  .)
+      
+      ident (. 
+      		   *vd = *tab->insert(Obj::Var, coco_string_create_char(t->val), _type);  
+	           cout<<"- Var decl name: "<<vd->name<<", type kind: "<<vd->type->kind<<", obj kind: "<<vd->kind<<endl;
+	      	   if(vd->type->kind == Struct::Arr){
+	      		  	cout<<"	elemtype kind: "<<vd->type->elemType->kind<<endl;
+	      	   }          
+      .)
+    
+      {"," ident (. *vd = *tab->insert(Obj::Var, coco_string_create_char(t->val), _type); 
+				      cout<<"- Var decl name: "<<vd->name<<", type kind: "<<vd->type->kind<<", obj kind: "<<vd->kind<<endl;
+	      	    if(vd->type->kind == Struct::Arr){
+	      			    cout<<"	elemtype kind: "<<vd->type->elemType->kind<<endl;
+	      	    }
+               
+      .)  
+      } ";".
+
+  
+  ClassDecl 	(. Obj * clazz,*vd;  string class_name; Struct * type = new Struct(Struct::Class); .)
+  	= "class" 
+  	  ident  (. class_name = string(coco_string_create_char(t->val)); 
+  	  			 clazz = tab->insert(Obj::Type,class_name,type);
+  	  		 .)
+  	  "{"    (.  tab->openScope(); cout<<"class decl: "<<class_name<<" scope opener: "<<tab->curLevel<<endl; .)
+  	   { (. vd = (Obj*)malloc(sizeof(Obj)); .)
+      (
+            
+            (IF(followedByColon())VarDecl<vd>   (.
+                            clazz->type->nFields++;
+                            cout<<"class field add: "<<vd->name<<endl;
+                            clazz->type->fields = tab->curScope->locals;           
+                          .))
+            | MethodDecl<clazz>
+             )} (. clazz->type->fields = tab->curScope->locals; .)
+  	   "}" 	 (. cout<<"class scope: "<<tab->curLevel<<", name:"<<clazz->name<<", fields: "<<clazz->type->nFields<<endl; 
+  	   			cout<<"class closing scope: "<<tab->curLevel<<endl;   tab->closeScope(); .) .
+
+
+
+  /*MethodDef< Obj * clazz > (. int npars = 0; Obj * vd = new Obj(); Struct * type = new Struct(0); string name_method; .)
+    = "meth" (Type<type> | "void" (. type = tab->noType; .)) 
+      ident    
+      (.    name_method = string(coco_string_create_char(t->val));
+
+            Obj * def_meth = tab->insert(Obj::Meth,name_method,type); 
+            cout<<"------- definicion de metodo: "<<name_method<<endl; 
+
+
+            Struct * _v = new Struct(0);
+        .)
+      
+      "(" [Type<_v> {"," Type<_v> }] ")" ";"
+  .*/
+
+  MethodDecl< Obj * clazz > (. int p = 0; int npars = 0; Obj * vd = new Obj(); Struct * type = new Struct(0); string name_method; .)
+    =  (Type<type> | "void" (. type = tab->noType; .)) 
+      ident    
+      (.    name_method = string(coco_string_create_char(t->val));
+
+           /* cout<<"------- metodo type kind : "<<type->kind<<endl;
+            Struct * _t = new Struct(Struct::Meth);
+            _t->elemType = new Struct(type->kind);
+            *type = *_t;
+            cout<<"------- to metodo type kind : "<<type->kind<<" elemType kind: "<<type->elemType->kind<<endl;
+            */
+
+            curMethod = tab->insert(Obj::Meth,name_method,type); 
+            tab->openScope(); 
+            cout<<"metohd new scope opener: "<<tab->curLevel<<endl; .)
+      
+      "(" (.tab->insert(Obj::Var, "this", clazz->type);  .) [FormPars<npars>] ")" 
+      (. curMethod->nPars = npars;
+         cout<<"numerp de parametros: "<<npars+1<<endl; 
+         //tab->insert(Obj::Var, "this", type);   
+
+        curMethod->locals = tab->curScope->locals;
+        curMethod->adr = CodeGenerator::pc;
+        code->put(ENTER);
+
+        p = CodeGenerator::pc;
+        code->put(0);
+        code->put(0);  
+        
+                  
+      .) 
+      
+      Block (. 
+        // +1 por q a los metodos se les pasa como primer parametro el "this" referencia a su objeto
+        code->program[p]  = npars + 1;
+        code->program[p+1] = tab->curScope->nVars;
+
+        if(curMethod->type == tab->noType){
+            code->put(EXIT);
+            code->put(RET);
+        }
+
+        cout<<"metohd  closing scope: "<<tab->curLevel<<endl;  tab->closeScope(); .)
+  .
+
+  NativeDecl  (.  bool ref = false;  Obj * native; int npars = 0;  Struct * _type = new Struct(0); .)
+    = "native" (Type<_type> | "void" (. _type = tab->noType; .) )
+      ident  (.
+              string symbol_name = string(coco_string_create_char(t->val));
+              native = tab->insert(Obj::Func, symbol_name, _type);
+              native->native=true;
+
+              tab->openScope();
+
+              .)
+     "(" [FormPars<npars>] ")" (.
+
+        if(lib_info->load_any){
+          Obj * nc = tab->find(symbol_name);
+          nc->nPars = npars;
+
+          tab->lib_symbols->put(lib_info->name,symbol_name,npars);
+
+          native->native_id = tab->lib_symbols->get_symbl(symbol_name);
+          cout<<"Register native: lib "<<lib_info->name<<" symbol: "<<symbol_name<<" args"<<nc->nPars<<" native id: "<< native->native_id<<endl;
+
+        }else{
+
+          SemErr(L"---------------- No se ha cargao ninguna libreria aun.");
+
+        }
+
+        tab->closeScope();
+      .) ";" .
+  
+  FuncDecl (. int npars = 0; int p = 0; Obj * vd = new Obj(); Struct * type = new Struct(0); string name_method; .)
+	  = (Type<type> | "void" (. type = tab->noType; .)) 
+	  	ident    (. name_method = string(coco_string_create_char(t->val));
+	  				curMethod = tab->insert(Obj::Func,name_method,type); 
+	  				tab->openScope(); 
+	  				cout<<"metohd new scope opener: "<<tab->curLevel<<endl; .)
+	  	
+	  	"(" [FormPars<npars>] ")" (. curMethod->nPars = npars;
+	  								 cout<<"numerp de parametros: "<<npars<<endl; 
+	  								 if(name_method=="main"){
+	  								 	CodeGenerator::main = CodeGenerator::pc;
+                       
+	  								 }
+
+        curMethod->locals = tab->curScope->locals;
+        curMethod->adr = CodeGenerator::pc;
+        code->put(ENTER);
+        p = CodeGenerator::pc;
+        code->put(curMethod->nPars);
+        code->put(tab->curScope->nVars);
+                     
+                    .) 
+      
+      Block (. 
+
+        code->program[p]   = npars;
+        code->program[p+1] = tab->curScope->nVars;
+       
+        if(curMethod->type == tab->noType){
+              code->put(EXIT);
+             code->put(RET);
+        }
+
+        if(name_method=="main"){
+          code->put(HLT);
+        }
+	  	cout<<"metohd  closing scope: "<<tab->curLevel<<endl;  tab->closeScope(); .)
+  .
+  
+  //ArrowMethodDecl = (Type | "void") ident "(" [FormPars] ")" "=>" "{" {VarDecl|Statement} "}".
+  
+  /*FormPars (. Struct * type = new Struct(0); Struct * type2 = new Struct(0); .)
+  	= Type<type> ident {"," Type<type2> ident}.*/
+
+
+  FormPars<int & npars> (. bool ref = false; Obj * vd; Struct * _type = new Struct(0); .)
+    = Type<_type> ident 
+    	(. npars++; vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type); 
+      		cout<<"- FormPar decl name: "<<vd->name<<", type kind: "<<vd->type->kind<<", obj kind: "<<vd->kind<<endl;
+      		if(vd->type->kind == Struct::Arr){
+      			cout<<"	elemtype kind: "<<vd->type->elemType->kind<<endl;
+      		}
+       
+        .)
+      {"," (. Struct * _type2 = new Struct(0); .) Type<_type2> ident
+      		(.  npars++; vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type2);
+      		cout<<"- FormPar decl name: "<<vd->name<<", type kind: "<<vd->type->kind<<", obj kind: "<<vd->kind<<endl;
+      		if(vd->type->kind == Struct::Arr){
+      			cout<<"	elemtype kind: "<<vd->type->elemType->kind<<endl;
+      		}
+       
+      .)}.
+  
+  Block  (.Obj * vd = new Obj();  .)
+  = "{" {IF(followedByColon())VarDecl<vd> |Statement} "}".
+   //Block (. Obj * ob = new Obj(); .) 
+   //= "{" {IF(NextTokenIsType()) VarDecl<ob>|Statement} "}".
+  
+  Statement     (. Operand * x = new Operand(0); Operand * y = new Operand(0); .)
+   = Designator<x>  
+    (
+    	ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr);code->put(CALL_S);*/ /*code->load(x); */  cout<<"call procedure: "<<x->obj->name<<" : "<<x->obj->adr<<endl; 
+                    if (x->obj->type != tab->noType){
+                        cout<<"-------------- CALL PROCEDURE POPING"<<endl;
+                        code->put(POP);
+                      }
+                .)
+    	| "=" Expr<y> (.
+    	 //cout<<"assignacion x(" <<x->obj->name<<" op kind: "<<x->kind<<" obj kind: " <<x->obj->kind<<" type kind: " <<x->obj->type->kind<<endl;
+    	 //cout<<" =  y(" <<y->obj->name<<" op kind: "<<y->kind<<" obj kind: " <<y->obj->kind<<" type kind: " <<y->obj->type->kind<<endl;
+        cout <<"   ||||||||||||| assignacion statement op expr type: "<<y->fromExprType<<endl; 
+    	 if(y->fromExprType == Operand::OneExpr){
+         code->load(y); code->store(x); 
+       }else if(y->fromExprType == Operand::RelaExpr){
+           code->load(y);
+           if(y->relaExprSub==1){ // restar cuando es: a >= b seia a >= b-1
+              code->put(ICONST);
+              code->put(1);
+              code->put(SUB);
+            }
+            code->put(CMPI);
+            /*
+            | "!="(. op=JE ; s = 0; .)
+  				  | ">" (. op=JLE; s = 0; .)
+   				  | ">="(. op=JLE; s = 1; .)
+  				  | "<" (. op=JGE; s = 0; .)
+  				  | "<="(. op=JG ; s = 0; .)*/
+
+            switch(y->relaExprOp){
+              case JNE:{
+                code->put(JE+70);
+                break;
+              }
+              case JE:{
+                code->put(JNE+70);
+                break;
+              }
+              case JG:{
+                code->put(JL+70);
+                break;
+              }
+              case JGE:{
+                code->put(JLE+70);
+                break;
+              }
+              case JLE:{
+                code->put(JGE+70);
+                break;
+              }
+            }
+            code->store(x); 
+            //code->put(y->relaExprOp);
+
+       }
+      .) 
+   	  ) ";"
+
+| "if"  (. int top = 0;  int adr = 0; int adr2 = 0; .)
+  		  (. top = CodeGenerator::pc; cout<<"if en linea: "<<  CodeGenerator::pc<<endl; .) 
+  		 ["("] Expr<x> [")"] (. 
+          RelationExpr(x);
+          adr = CodeGenerator::pc-1;
+          
+          .)
+  		  Statement 
+   ("else" (. code->put(JMP); code->put(0);  
+   			adr2 = CodeGenerator::pc-1; 
+   			code->fixup(adr);
+   			.)
+   	Statement (. code->fixup(adr2); .)
+   		| (. code->fixup(adr); .)
+   )
+  | "while" (. int top = 0;  int adr = 0;.)
+  		(. top = CodeGenerator::pc; cout<<"while en linea: "<<  CodeGenerator::pc<<endl; .) 
+  		["("] Expr<x> [")"] (. 
+        cout <<"   ||||||||||||| while statement op expr type: "<<x->fromExprType<<endl; 
+          
+          RelationExpr(x);
+          adr = CodeGenerator::pc-1; cout<<"while after cond en linea: "<<adr<<endl; 
+        
+      .)
+  		 Statement (. code->put(JMP); code->put(top); code->fixup(adr); .)
+  
+  //| "break" (. int adr = CodeGenerator::pc; cout<<"----BREAK en linea: "<<adr<<endl; .)
+  | "return" (Expr<x> (. code->load(x);
+  		if(curMethod->type == tab->noType){
+  			cout<<"void metohd must not return a value"<<endl;
+  		}
+  	.)
+	| (.if(curMethod->type != tab->noType){
+  			cout<<"return value expected"<<endl;
+
+	}.)
+  	)  (. code->put(EXIT); code->put(RET); .)
+
+  	 ";"
+  /*| "arlen" "(" Expr<x> ")" (.
+      code->put(x->obj->adr);
+      code->put(ALEN);
+  .) ";"*/
+  | Mcode
+  //| "read" "(" Designator<x> ")" ";"
+  | "print" (.  int wlen = 0; Operand * len = new Operand(0);  .) 
+  			"(" Expr<x> (. 
+            
+         .) 
+  			[","  Expr<len>  (. wlen = 1; .)] ")" (.
+  				if(wlen == 1){
+  					code->load(len); 
+  					code->load(x);
+  					code->put(CWRITE);
+  				}else{
+            code->load(x); 
+            if(x->type->kind == Struct::Int){
+  					code->put(IWRITE);
+              
+            }
+            if(x->type->kind == Struct::Float){
+              
+  					code->put(FWRITE);
+            }
+            
+  				}
+  			.) ";"
+  | Block
+  | void Expr<y> (. code->put(POP); .)
+  | ";".
+  
+  ActPars<Operand * m> 
+  = "(" [ (. Operand *ap1 = new Operand(0); .) Expr<ap1>  (. code->load(ap1); .) 
+  	{"," (. Operand *ap2 = new Operand(0); .) Expr<ap2> (. code->load(ap2); .) } ] ")".
+
+
+
+  
+  Relop<int & op, int & s> = "=="(. op=18; .)
+  				  | "!="(. op=JE ; s = 0; .)
+  				  | ">" (. op=JLE; s = 0; .)
+   				  | ">="(. op=JLE; s = 1; .)
+  				  | "<" (. op=JGE; s = 0; .)
+  				  | "<="(. op=JG ; s = 0; .)
+  				 .
+  Expr<Operand * x>
+  =	 LogicOr<x>                      
+  .
+  LogicOr<Operand * x> =  (. Operand *y = new Operand(0); .)
+
+    LogicAnd<x> {"||" LogicAnd<x>}.
+
+  LogicAnd<Operand * x>  =  (. Operand *y = new Operand(0); .)
+
+    RelaExpr< x> {"&&" RelaExpr< y>}.
+
+  RelaExpr<Operand * x> (. int one_op = 1; int sub=0; Operand *y = new Operand(0); int op = 0;.) 
+  	= AddSub<x> 
+      
+      [ Relop<op,sub> (. x->fromExprType = Operand::RelaExpr; x->relaExprSub=sub;x->relaExprOp=op;.) AddSub<y> 
+        (.  
+         
+          cout<<"      |||||||||||||||||| exprecion de relacion: = "<< Operand::RelaExpr<<endl;
+          code->load(x);
+          code->load(y);
+        .)
+      ]
+
+  	.
+  
+  AddSub<Operand * x> (. Operand *y = new Operand(0);  int op = 0; int sub = 0; int invert = 0; .)
+   = [(
+     "-" (.  sub = 1; .)
+     |"!" (. invert = 1; .)
+    )] 
+      BitExpr<x> (. 
+        if(sub==1){ 
+          code->put(ICONST); code->put(0);
+          code->load(x); 
+          code->put(SUB);
+        }else if(invert ==1){
+            code->load(x);
+            code->put(INVERT);
+        } .)
+      {
+   					Addop<op> BitExpr<y> (.
+                //SemErr(L"---------------- se debe concatenar y no hacer una operacion aricmetica.");
+
+              
+               cout<<"-------------------- be string x "<<x->type->kind<<endl;
+               cout<<"-------------------- be string y "<<y->type->kind<<endl;
+              if(
+                (x->type == SymbolTable::stringType || x->type->kind == Struct::Arr)
+                ||
+                (x->type == SymbolTable::stringType || y->type->kind == Struct::Arr)
+                ){
+
+                code->load(y);
+                if(y->type == SymbolTable::stringType || y->type->kind == Struct::Arr){
+                  cout<<"-------------------- be string y elemtype kind "<<y->type->elemType->kind<<endl;
+
+                }else{
+                  cout<<"--------------------     op y no es de tipo string o char[] "<<y->type->kind<<" anteponeindo itos"<<endl;
+                  if(y->type->kind == Struct::Int){
+                    code->put(ITOS);
+
+                  }else if(y->type->kind == Struct::Float){
+                    code->put(FTOS);
+                  }else if(y->type->kind == Struct::Double){
+                    code->put(DTOS);
+                  }else if(false && y->type->kind == Struct::Class){
+                    Obj * tmpO = tab->find(y->obj->name);
+                    Operand * otmp0 = new Operand(tmpO);
+                    Obj * fld = tab->findField("toString",tmpO->type);
+                    Operand * otmp1 = new Operand(fld);
+                    cout<<"op y: "<< tmpO->name <<", es un objeto de clase: "<<endl;
+                    if(fld != SymbolTable::noObj){
+                      
+                    cout<<"op y contiene el metodo toString: adr "<<fld->adr<<endl;
+                    //llamar al metodo toString de la clase
+                    code->load(otmp0);
+                    FunctionCall(otmp1);
+                    }else{
+                      
+                    
+                    SemErr(L"---- op y NO contiene el metodo toString.");
+                    }
+                    //SemErr(L"---- op y es un objeto de clase .");
+                  }else{
+                    
+                    SemErr(L"---- op y no se puede llevar implicitamente a string.");
+                  }
+                }
+
+
+                code->load(x);
+                if(x->type == SymbolTable::stringType || x->type->kind == Struct::Arr){
+                  cout<<"-------------------- be string x elemtype kind "<<x->type->elemType->kind<<endl;
+                  
+                }else{
+                  cout<<"--------------------     op x no es de tipo string o char[] "<<y->type->kind<<" anteponeindo itos"<<endl;
+                  if(x->type->kind == Struct::Int){
+                    code->put(ITOS);
+
+                  }else if(x->type->kind == Struct::Float){
+                    code->put(FTOS);
+                  }else if(x->type->kind == Struct::Double){
+                    code->put(DTOS);
+                  }else if(false && x->type->kind == Struct::Class){
+                    Obj * tmpO = tab->find(x->obj->name);
+                    Operand * otmp0 = new Operand(tmpO);
+                    Obj * fld = tab->findField("toString",tmpO->type);
+                    Operand * otmp1 = new Operand(fld);
+                    cout<<"op x: "<< tmpO->name <<", es un objeto de clase: "<<endl;
+                    if(fld != SymbolTable::noObj){
+                      
+                    cout<<"op x contiene el metodo toString: adr "<<fld->adr<<endl;
+                    //llamar al metodo toString de la clase
+                    code->load(otmp0);
+                    FunctionCall(otmp1);
+                    }else{
+                      
+                    
+                    SemErr(L"---- op x NO contiene el metodo toString.");
+                    }
+                    //SemErr(L"---- op x es un objeto de clase .");
+                  }else{
+                    
+                    SemErr(L"---- op x no se puede llevar implicitamente a string.");
+                  }
+                }
+               /*
+                if(x->type->elemType->kind == Struct::Char || y->type->elemType->kind == Struct::Char){
+
+                }else{
+                  SemErr(L"------------- x o y no son string o char[]");
+                }*/
+                
+               
+                cout<<"-------------------- string x "<<x->type->kind<<endl;
+                cout<<"-------------------- string y "<<y->type->kind<<endl;
+               
+
+               code->put(STRCAT);
+                
+              }else  if(
+                (x->type == SymbolTable::floatType || x->type->kind == Struct::Float)
+                ||
+                (y->type == SymbolTable::floatType || y->type->kind == Struct::Float)
+              ){
+
+                 code->load(x);
+                  cout<<"||||||||||||||||||||| 1 x float: "<<x->type->kind<<" val:"<<x->val<<endl;
+                  if(x->type != SymbolTable::floatType && x->type->kind != Struct::Float){
+                      cout<<"||||||||||||||||||||| 2 x not float, ITOF"<<x->type->kind<<endl;
+                      code->put(ITOF);
+                      x->type =SymbolTable::floatType;
+                  }
+                  code->load(y);
+                  cout<<"||||||||||||||||||||| 1 y float: "<<y->type->kind<<" val:"<<x->val<<endl;
+                  if(y->type != SymbolTable::floatType && y->type->kind != Struct::Float){
+                      cout<<"||||||||||||||||||||| 2 y not float, ITOF"<<y->type->kind<<endl;
+                      code->put(ITOF);
+                      y->type =SymbolTable::floatType;
+                  }
+                  
+                  switch(op){
+                    case ADD:{
+                      code->put(FADD);
+                      break;
+                    }
+                    case SUB:{
+                      code->put(FSUB);
+                      break;
+                    }
+                    case MUL:{
+                      code->put(FMUL);
+                      break;
+                    }
+                    case DIV:{
+                      code->put(FDIV);
+                      break;
+                    }
+                    case MOD:{
+                      code->put(FMOD);
+                      break;
+                    }
+                  }
+                
+              
+              }else if(
+                (x->type == SymbolTable::intType || x->type->kind == Struct::Int)
+                ||
+                (y->type == SymbolTable::intType || y->type->kind == Struct::Int)
+              ){
+              code->load(x);
+              code->load(y);
+              code->put(op);
+              }
+   						
+
+   					.)
+
+   					}.
+
+
+  
+  BitExpr<Operand * x>  (. Operand *y = new Operand(0);  int op = 0; .)
+  = BitShiftExpr<x> {Bitop<op> BitShiftExpr<y>
+  					(.
+   						code->load(x);
+   						code->load(y);
+   						code->put(op);
+
+   					.)
+
+  				}.
+
+  BitShiftExpr<Operand * x>  (. Operand *y = new Operand(0);  int op = 0; .)
+  = Term<x> {BitShiftop<op> Term<y>
+  					(.
+   						code->load(x);
+   						code->load(y);
+   						code->put(op);
+
+   					.)
+
+  				}.
+
+          
+  Term<Operand * x>  (. Operand *y = new Operand(0);  int op = 0; .)
+  = Factor<x> {Mulop<op> Factor<y>
+  					(.
+   						code->load(x);
+   						code->load(y);
+   						code->put(op);
+
+   					.)
+
+  				}.
+
+  Factor<Operand * x> (. Operand * y = new Operand(0);  .) = 
+   
+    Designator<x> (. if(x->kind != Operand::Func){code->load(x);} code->load(x); .) [ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr); code->put(CALL_S);*/ /*code->load(x); */  cout<<"call function: "<<x->obj->adr<<endl; .) ] 
+  
+  | ident   (. string ident_name = coco_string_create_char(t->val); 
+  			   Obj * obj = tab->find(ident_name);
+  			   *x = *new Operand(obj);
+  			   cout<<"loading"<<endl;
+  			   //code->load(x);
+  			 .)
+  | floatLit (. int val = 0; string str_val = coco_string_create_char(t->val);
+  			   val = NUMBERS::Numbers::FloatToBitInt(stof(coco_string_create_char(t->val)));
+           //Obj * float_type = tab->find("float");
+  			   *x = *new Operand(val);
+           x->type =tab->find("float")->type;
+           x->val = val;
+
+  			   cout<<"number float: kind "<<x->kind<<" type kind: "<<x->type->kind<<endl;
+  			  //code->load(x);
+  			   cout<<"number float: kind "<<x->kind<<" type kind: "<<x->type->kind<<endl;
+  			.) 
+  | number  (. int val = 0; string str_val = coco_string_create_char(t->val);
+  			   val = stoi(str_val);
+           
+  			   *x = *new Operand(val); 
+            x->type =tab->find("int")->type;
+  			   cout<<"number: kind "<<x->kind<<" type kind: "<<x->type->kind<<endl;
+  			   //code->load(x);
+  			   cout<<"number: kind "<<x->kind<<" type kind: "<<x->type->kind<<endl;
+  			.) 
+  | stringConst (.
+                  int index = code->string_set->put(onlyContent(string(coco_string_create_char(t->val))));
+                  //*x = *new Operand(index);
+                 *x = *new Operand(index);
+                  x->type = tab->find("string")->type;
+
+                  //x->type = tab->find("string")->type;
+
+                  code->put(LDCS);
+                  code->put(index);
+                  x->kind = Operand::Stack;
+                  x->val = index;
+                  cout<<"regiter: "<<coco_string_create_char(t->val)<<" index: "<<index<<"type: "<<x->type->kind<<endl;
+                .)
+
+  | "new" ident (. string name = coco_string_create_char(t->val);
+  					Obj * obj = tab->find(name);
+  					cout<<"new obj of: "<<obj->name<<" type: "<<obj->type->kind<<endl;
+  				 .)
+        
+        (. 
+            cout <<"      -------- next : "<<la->kind<<endl; 
+            if(la->kind == _popen){
+              cout<<"se creara una instacia"<<endl;
+              code->put(NEW); 
+              code->put(obj->type->nFields); 
+            }
+        .)
+  	 [
+  	 	"[" Expr<y> "]" (. 
+  	 			code->load(y); 
+  	 			code->put(ALC); 
+
+  	 			Struct * tmp = new Struct(Struct::Arr,obj->type); 
+  	 			cout<<"new array: kind : "<<tmp->kind <<", elemType->kind: "<<tmp->elemType->kind<<endl;
+  	 			.)
+
+  	 	| 
+
+       ActPars<y> (. 
+        
+
+        Obj * fld = tab->findField("construct",obj->type);
+
+        if(fld != SymbolTable::noObj){
+         
+          *x = *new Operand(fld);
+          x->kind = Operand::Meth;
+
+         
+          //code->load(x);
+          code->put(ICONST); 
+          code->put(x->obj->adr); /*code->load(x); */ 
+          code->put(CALL_S);
+
+          cout<<"---------- la clase "<<name<<" tiene constructor"<<endl;
+
+        }else{
+          cout<<"---------- la clase "<<name<<" no tiene constructor"<<endl;
+
+        }
+        cout<<" new constructor"<<endl; 
+        .)
+  	 ] (. *x = *new Operand(0); x->obj = obj; x->kind = Operand::Stack; x->type = obj->type;  .)
+  
+  | "?" Expr<x>   (. Operand * tmp; int top = 0;  int adr = 0; int adr2 = 0; .)
+        (. 
+          RelationExpr(x);
+          adr = CodeGenerator::pc-1;
+          //hacemos q op x sea un operando normal y no de relacion
+          tmp = x;
+          .)
+        Expr<y> (.  
+          *x= *y;
+          x->fromExprType = Operand::OneExpr;   
+          x->relaExprSub = tmp->relaExprSub;
+          x->relaExprOp = tmp->relaExprOp;
+          code->load(x);.)
+        (
+          ":"  
+        (. 
+            code->put(JMP); code->put(0);  
+            adr2 = CodeGenerator::pc-1; 
+            code->fixup(adr);
+   			.)
+         Expr<y>  (. 
+         *x= *y;
+          x->fromExprType = Operand::OneExpr;   
+          x->relaExprSub = tmp->relaExprSub;
+          x->relaExprOp = tmp->relaExprOp;
+          code->load(x); 
+          code->fixup(adr2); .)
+        )
+
+  | "(" Expr<x> ")".
+
+  Designator <Operand * x> (. Operand * y = new Operand(0); string name, f_name,qua;  .)
+   = ident (.  name = coco_string_create_char(t->val);
+            qua = name;
+   			   Obj * obj = tab->find(name); 
+            if(obj == SymbolTable::noObj){
+             	string err = "no se encontro: "+name;
+              SemErr(L"");
+              cout<<err<<endl;
+		          errors->Exception(L"");
+              //exit(1);
+            }
+   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
+   			   *x = *new Operand(obj); 
+   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
+    				
+            if(obj->kind == Struct::Func){
+              //x->kind == Operand::Func;
+              //cout<<"----- operan to func"<<endl;
+            }
+   			   .)
+
+    {("." ident  (. if(x->type->kind == Struct::Class){
+    					code->load(x);
+
+
+    					f_name = coco_string_create_char(t->val);
+    					cout<<"Designator f_name: "<<f_name<<endl;
+    					Obj * fld = tab->findField(f_name,x->type);
+              if(fld == SymbolTable::noObj){
+
+                string err = to_string(x->type->nFields)+" No se encontro el campo '"+f_name+"' en el objeto '"+qua+"'";
+                SemErr(L"");
+                cout<<err<<endl;
+                errors->Exception(L"");
+              }
+              qua.append(".").append(f_name);
+    					*x = *new Operand(fld);
+    					if(fld->kind == Obj::Var){
+
+                x->kind = Operand::Fld;
+
+              }else if(fld->kind == Obj::Meth){
+
+                x->kind = Operand::Meth;
+              }
+    					x->adr = fld->adr;
+    					x->type = fld->type;
+    					cout<<"Designator f_name: "<<f_name<<" op kind: "<<x->kind<<endl;
+
+    				} else{
+              string err = qua+" no es un objeto.";
+              SemErr(L"");
+              cout<<err<<endl;
+              errors->Exception(L"");
+    				}
+    			  .)
+
+    | ("[" (. code->load(x); .) 
+    	 Expr<y> (. 
+           
+    	 	  if(y->type->kind != Struct::Int ){
+              string err = "El indice debe ser de tipo int";
+                SemErr(L"");
+                cout<<err<<endl;
+                errors->Exception(L"");
+          }else{
+              qua.append("[").append(to_string(y->val)).append("]");
+              cout<<" x name: "<<(x->obj->name )<<" " << Struct::Arr<<endl;
+    	 				cout<<qua<<" type  kind : "<<(x->type->kind )<<", expected: " << Struct::Arr<<endl;
+        
+              if(x->type->kind == Struct::Arr){
+                cout<<" x->type->elemType->kind: "<<x->type->elemType->kind <<endl;
+                cout<<" index type: "<<y->type->kind<<endl;
+                  
+              
+              code->load(y);
+                x->kind = Operand::Elem;
+                x->type = x->type->elemType;
+              
+                
+              }else{
+                cout<<name<<" is not an array"<<endl;
+              }
+          }
+    	 		
+    	  .)
+     "]" 
+     {"[" (. code->put(IALOAD); .) Expr<y> (. 
+            
+          if(y->type->kind != Struct::Int ){
+              string err = "El indice debe ser de tipo int";
+                SemErr(L"");
+                cout<<err<<endl;
+                errors->Exception(L"");
+          }else{
+              qua.append("[").append(to_string(y->val)).append("]");
+              cout<<qua<<" type  kind : "<<(x->type->kind )<<", expected: " << Struct::Arr<<endl;
+              if(x->type->kind == Struct::Arr){
+                //cout<<" x->type->elemType->kind: "<<x->type->elemType->kind <<endl;
+                //cout<<" index type: "<<y->type->kind<<endl;
+                  
+                code->load(y);
+                x->kind = Operand::Elem;
+                x->type = x->type->elemType;
+              
+                
+              }else{
+                cout<<name<<" is not an array"<<endl;
+              }
+          }
+      
+      .)"]"}
+      (.  cout<<"arr "<<qua<<endl; .)
+      )
+     )}.
+  Addop<int & op> = "+" (. op = 1; .) | "-" (. op = 2; .).
+  Mulop<int & op>  = "*"  (. op = 3; .)| "/" (. op = 4; .) | "%" (. op = 5; .).
+  Bitop<int & op>  = "&"  (. op = 3; .)| "|" (. op = 4; .) | "^" (. op = 5; .).
+  BitShiftop<int & op>  = "<<"  (. op = 3; .)| ">>" (. op = 4; .) | "%" (. op = 5; .).
+
+  Mcode = "mcode"  "begin"  ASM  "end".
+  ASM               = StatementSequence   .
+  StatementSequence = { McodeStatement   } .
+  McodeStatement  (. int addres; .) 
+    = Executable | Directive<addres> .
+  Executable     (. int op,addres; op=0,addres = 0; .)  
+   = [ Label ] [ OneByteOp<op> (. code->put(op); .)| TwoByteOp<op> Address<addres> (. code->put(op); code->put(addres); .)  ] .
+  OneByteOp<int & op>        = "ADD" (. op = ADD; .) | "PSH"|  "POP" | "CALL" (. op = CALL_S; .) | "ALEN" (. op=ALEN; .) .
+  TwoByteOp<int & op>        = "LDA"(. op = ILOADL; .) | "STORE" (. op = ISTOREL; .) | "GOTO" |"ICONST" (. op = ICONST; .)   .
+  Address<int & addres> 
+    = Label | number (. 
+                        string str_val = coco_string_create_char(t->val);
+                        addres = stoi(str_val);
+                  .).
+  Directive<int & addres>
+    =   Label "EQU" KnownAddress<addres>
+          | [ Label ] ( "DC" Address<addres> | "DS" KnownAddress<addres> )
+          | "ORG" KnownAddress<addres> | "BEG" .
+  Label             = ident .
+  KnownAddress<int & addres>      = Address<addres> .
+
+ 
+  LoadExp = {Load} .
+  Load = 
+        ("@>"|"@include") 
+        stringConst (. string i_file(coco_string_create_char(t->val)); cout<<"include: "<<i_file<<endl; 
+        ((type_f) _p)(onlyContent(i_file)); .)  ";".
+
+
+  LibLoad = ("@>l"|"@load_lib")   stringConst
+      (.
+        if(lib_info->load_any){
+          SemErr(L"No se puede cargar mas de una libreria por archivo.");
+        }
+        string lib_path(onlyContent(coco_string_create_char(t->val)));
+        lib_info->name = lib_path;
+        lib_info->load_any=true;
+        cout<<"lib_load: "<<lib_info->name<<endl;
+      .)
+       ";" .
+
+END Program.

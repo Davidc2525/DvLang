@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package DvObjecFile;
+option java_package = "orchi.DvVm.Compiler.Program.DvObjectFile";
+option cc_enable_arenas = false;
+
+message Program {
+  string signature = 1;
+  int32 size = 2;
+  int32 mainp = 3;
+  Strings strings = 4;
+  Code code = 5;
+}
+
+
+message Strings {
+  repeated string inst = 1;
+}
+
+message Code {
+  repeated int64 inst = 1;
+}

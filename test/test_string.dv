@@ -1,0 +1,262 @@
+package main
+
+@load_lib "/home/david/DvLangVM/src/libs_std/std/libstd.so";
+int NULL;
+int 
+	LOAD,
+	ICONS,
+	STORE,
+	GOTO,
+	IWRITE,
+	ADD;
+class User{
+	string name;
+	int age;
+
+	string toString(){	
+		return "User@{name:'"+this.name+"',age:"+this.age+"}";
+	}
+	
+	string dump(){	
+		return "usuario: "+this.name+", tiene "+this.age+" años.";
+	}
+
+	User construct(string value,int age){
+		this.age = age;
+		this.name = value;
+		return this;
+	}
+}
+
+/*clases para maquina virtual*/
+class Heap{
+
+	int [] h;
+	int size;
+
+	int get(int index){
+		return this.h[index];
+	}
+
+	void put(int index, int value){
+		this.h[index] = value;
+	}
+
+	Heap construct(int size){
+
+		this.h = new int[size];
+		this.size = size;
+		return this;
+	}
+}
+
+class Stack{
+
+
+	int [] heap;
+	int sp;
+	int size;
+
+	void push(int val){
+		if(this.sp - 1 > this.size){
+			// stack overflow
+		}
+		this.heap[this.sp] = val;
+		this.sp = this.sp + 1;
+
+	}
+	int pop()
+	int r;
+	{
+		this.sp = this.sp - 1;
+		if(this.sp < 0 ){
+			//stack underflow
+			this.sp = 0;
+		}
+		r = this.heap[this.sp];
+		return r;
+	}
+
+	Stack construct(int size){
+		this.size = size;
+		this.heap = new int[size];
+		this.sp = 0;
+		return this;
+	}
+
+}
+
+/**
+* Maquina de pila
+*/
+class Machine{
+
+	Heap mem;
+	Stack e_stack;
+	int [] program;
+	int pc;
+	int max_ex;
+
+	int next()
+	int op_tmp;
+	{
+		op_tmp = this.program[this.pc];
+		this.pc = this.pc +1;
+
+		return op_tmp;
+	}
+
+	void eval(int op)
+	int op1,op2;
+	{
+		if(op == ICONS){
+			op1 = this.next();		
+
+			this.e_stack.push(op1);
+		}
+
+		if(op == ADD){
+			op2 = this.e_stack.pop();
+			op1 = this.e_stack.pop();			
+
+			this.e_stack.push(op1+op2);
+		}
+
+		if(op == LOAD){
+			op1 = this.next();
+
+			this.e_stack.push(this.mem.get(op1));
+		}
+
+		if(op == IWRITE){
+			op1 = this.e_stack.pop();
+
+			print(op1);
+		}
+
+		if(op == STORE){
+			op1 = this.e_stack.pop();
+			op2 = this.next();
+
+			this.mem.put(op2,op1);
+		}
+
+		if(op == GOTO){
+			
+			op1 = this.next();
+
+			this.pc = op1;
+		}
+	}
+
+	void run()
+	int x;
+	int op;
+	{
+
+		x = 0;
+		while(x<this.max_ex){
+			op = this.next();			
+			this.eval(op);
+			x=x+1;
+		}
+
+	}
+
+	Machine construct(int [] program,int max_ex){
+		this.pc = 0;
+		this.program = program;
+		this.mem = new Heap(100);
+		this.e_stack = new Stack(100);
+		this.max_ex = max_ex;
+		return this;
+	}
+
+
+}
+
+/*clases para maquina virtual*/
+
+{
+	native int println(string str);
+	/**
+    * Native str,nc2_len, tamaño de una cadena
+    */
+    native int strlen(string str);
+	native string std_itos(int number);
+	
+	int strequal(string v1,string v2)
+	{
+		int eq,x;
+		eq = 1;
+		x = 0;
+		if(strlen(v1) == strlen(v2)){
+			while(x<strlen(v1)){
+				if(v1[x] != v2[x]){
+					eq = 0;
+					return eq;
+				}
+				x=x+1;
+			}
+		}else{
+			eq = 0;
+		}
+
+		return eq;
+	}
+	void main(string [] args)
+	{	
+		User [] users;
+		string nc,nc2;
+		int x;
+		User n;
+		Machine maquina;
+		int []program;
+
+		LOAD  = 0;
+		STORE = 1;
+		ADD   = 2;
+		GOTO  = 3;
+		ICONS = 4;
+		IWRITE = 5;
+
+		program = new int[100];
+
+		program[0] = ICONS;
+		program[2] = 0;
+		program[3] = STORE;
+		program[4] = 0;
+
+		program[5] = LOAD;
+		program[6] = 0;
+		program[7] = ICONS;
+		program[8] = 1;
+		program[9] = ADD;
+		program[10] = STORE;
+		program[11] = 0;
+		program[12] = LOAD;
+		program[13] = 0;
+		program[14] = IWRITE;
+		
+		program[15] = GOTO;
+		program[16] = 5;
+
+		maquina = new Machine(program,200);
+
+		maquina.run();
+		
+		
+
+		nc = "david";
+		nc2 = "david";
+		println("> "+nc+" y "+nc2+" son iwuales? "+std_itos(strequal(nc,nc2)));
+
+		//return;
+		
+
+		
+		//println("n: "+std_itos(25)+c3);
+
+	}
+
+}

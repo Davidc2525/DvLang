@@ -1,0 +1,21 @@
+package main
+
+@include "test/std.dv";
+@include "test/net.dv";
+
+int csm;
+{
+
+    
+    void nc(int x){
+        println("x: "+itos(x));
+        nc(x+1);
+        
+    }
+    
+    void main(){
+      
+        nc(1);
+        
+    }
+}

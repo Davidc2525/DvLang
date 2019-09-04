@@ -1,0 +1,27 @@
+package main
+
+@include "test/std.dv";
+
+class Usuario{
+
+    string nombre;
+    int anios;
+
+    Usuario construct(string n,int a){
+        this.nombre = n;
+        this.anios = a;
+        return this;
+    }
+}
+
+{
+
+    void main(string[]args){
+        Usuario u1;
+
+        u1 = new Usuario("Lola",25);
+
+        println(u1.nombre+", tiene "+u1.anios+" años.");
+    }
+
+}

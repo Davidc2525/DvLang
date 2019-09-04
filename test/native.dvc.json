@@ -1,0 +1,75 @@
+{
+	"signature": "DVVM",
+	"main": 0,
+    "size": 100,
+    "strings":[
+        "Hola mundo, saludaondo a: ",
+        "David ",
+        "Luisa"
+    ],
+    "libs_symbols":[
+        {
+            "lib_name": "src/libs_std/net/libnet.so",
+            "symbols": []
+        },
+        {
+            "lib_name": "src/libs_std/std/libstd.so",
+            "symbols": [
+                {
+                    "name": "print",
+                    "argc": 1
+                },
+                {
+                    "name": "println",
+                    "argc": 1
+                },
+                {
+                    "name": "std_free",
+                    "argc": 1
+                },
+                {
+                    "name": "std_realloc",
+                    "argc": 2
+                },
+                {
+                    "name": "std_malloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_calloc",
+                    "argc": 1
+                }
+            ]
+        }
+    ],
+	"code": [
+            26,0,0,
+                39,0,
+                39,1,
+                80,
+                12,0,
+
+                11,0,
+                0,1,
+                31,
+
+                11,0,
+                0,2,
+                0,3,
+                31,
+                12,0,
+
+                11,0,
+                0,1,
+                31,
+
+                0,10,
+                0,4,
+                31,
+                
+               
+            27,
+            28,
+            29
+	]
+}

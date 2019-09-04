@@ -1,0 +1,51 @@
+package main
+//@include "test/net_lib.dv";
+/**
+	este archivo se uso para arreglar la parte de conflictos 
+	en la declaracion de propiedades y metodos en las clases
+	 y  para poder declarar variables dentro del cuerpo de la funcion
+
+	 antes de el arreglo:
+	 	void main(string[]args)
+		int x,y;
+	 	{	
+			x = ...;
+			y = ...;
+	 	}
+
+	 luego de el arreglo:
+	 	void main(string[]args){	
+			int x;
+			x = ...;
+			int y,z;
+			y = ...;
+			z = ...;
+	 	}
+*/
+class nc {
+	int a;
+	void printA(){
+		
+		print(this.a);
+		
+	}
+	nc construct(int initial){
+		this.a = initial;
+		return this;
+	}
+}
+
+{
+
+
+		void main(string[]args)
+		{
+			nc c;
+			
+			c = new nc(25);
+			c.printA();
+			print(null);
+
+		}
+
+}

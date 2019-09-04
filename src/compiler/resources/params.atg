@@ -1,0 +1,100 @@
+#include<iostream>
+#include "params.h"
+using namespace std;
+using namespace DVLANG::COMPILER_;
+
+
+COMPILER _Params_
+
+  /*eliminar comillas de la cadena*/
+  string onlyContent(string str){
+    return str.substr(1,str.length()-2);
+  }
+
+
+  Params * params;
+
+CHARACTERS
+
+    tab           = '\u0009'. /*  9 = tabulator */
+    lf            = '\u000a'. /* 10 = line feed */
+    cr            = '\u000d'. /* 13 = carriage return */
+
+   //letter = 'a'..'z' + 'A'..'Z'.
+   //digit = '0'..'9'.
+   whiteSpace = ' ' + '\t' + '\r' +'\n'.
+   char = ANY - "'" - '\\' - whiteSpace.
+
+   stringChar    = ANY - "\"" - '\\' - cr - lf.
+
+   zero          = '0'.
+   zeroToThree   = zero + "123" .
+   octalDigit    = zero + "1234567" .
+   nonZeroDigit  = "123456789".
+   digit         = '0' + nonZeroDigit .
+   hexDigit      = digit + "ABCDEFabcdef" .
+   letter        = 'A' .. 'Z' + 'a' .. 'z' + '_' + '$'.
+
+TOKENS
+
+ident = letter {letter | digit | "_" }.
+number = digit {digit}.
+
+charConst = "'" char "'". //including '\r', '\t', '\n
+stringConst =
+    "\"" { stringChar
+         | "\\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "\'" | "\\"
+                | "u" { "u" } hexDigit hexDigit hexDigit hexDigit
+                | zeroToThree [ octalDigit ] [ octalDigit ]
+                | octalDigit [ octalDigit ]
+                )
+         }
+    "\"".
+
+floatLit =
+    "." digit {digit}
+    [("e" | "E") ["+" | "-"] digit {digit}]
+    [ "F" | "f" | "D" | "d" ]
+  | digit {digit}
+    ( "." {digit}
+      [("e" | "E" ) ["+" | "-"] digit {digit} ]
+      [ "F" | "f" | "D" | "d" ]
+    | ("e" | "E") ["+" | "-"] digit {digit}
+      [ "F" | "f" | "D" | "d" ]
+    | "F" | "f" | "D" | "d"
+    ).
+
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO cr lf
+
+IGNORE whiteSpace
+
+
+PRODUCTIONS
+
+  _Params_ = 
+   [Run] Input {Expr}.
+
+  Input = ["-i"] stringConst (. params->input = onlyContent(coco_string_create_char(t->val)); .).
+
+  Expr = Out
+  | Format
+  | Debug
+  | Run .
+
+  Out = "-o" [stringConst 
+              (. 
+                params->output = onlyContent(coco_string_create_char(t->val));
+              .)
+            ].
+
+  Debug = "-d" ("ALL"|"WARN"|"ERR").
+  Format = "-type" ("json"|"protobuf"|"plaint").
+  Run = "-run" (. params->run = true; .).
+
+ /* ComPath = {Path} "." "dv".
+  Path = ident { ["/"] ident}.*/
+
+
+END _Params_.

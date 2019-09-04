@@ -1,0 +1,18 @@
+package main
+@include "test/std.dv";
+{   
+    void main(string[] args){
+        int x;
+        string z;
+        z = "david";
+        
+        x = 10;
+        while x {
+            println("z: "+z+" x: "+ x);
+            if x == 8 z = "-";
+            if x <= 4 z = std_itos(x);
+            x = x - 1;
+        }
+        
+    }
+}

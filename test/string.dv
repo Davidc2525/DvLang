@@ -1,0 +1,88 @@
+
+package main 
+
+//@include "test/toload.dv";
+int seed,const_m,const_ad,max;
+
+
+class Addr{
+	int a;
+	int b;
+	int c;
+	int d;
+}
+class Coneccion{
+
+	int port;
+	Addr dir;
+	int conectado;
+
+	void nc(int a, int b){
+		print(this.port);
+		print(a + b + 2626);
+	}
+
+}
+
+
+{	
+	int rand()
+	int x;
+	{
+		
+		const_m  = 1103515245;
+		const_ad = 12345;
+		
+		seed = ( ( seed * const_m ) + const_ad+x) % max;
+		return seed;
+
+	}
+
+	Coneccion nuevaCon(Addr dir,int port)
+	Coneccion con;
+	int x,r;
+	{
+		con = new Coneccion(200);
+		con.dir = dir;
+		con.port = port;
+
+		x = 0;
+		while(x < 10000+1){
+			
+		r = rand();
+			x=x+1;
+		}
+		con.conectado = 0;
+		
+		print(r);
+		if(rand() > 100){
+
+			con.conectado = 1;
+		}
+		
+		return con;
+
+	}
+	void main(int []args)
+	Addr dir;
+	Coneccion con;
+	int x,r;
+	{	
+		seed = 1;
+		max = 327689;
+		
+		dir = new Addr();
+		dir.a = 193;
+		dir.b = 168;
+		dir.c = 0;
+		dir.d = 1;
+
+		con = nuevaCon(dir,2525);
+		print(con.conectado);
+
+		
+
+	}
+	
+}
+

@@ -1,0 +1,24 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"*.atg": "ebnf",
+			"*.dv": "swift",
+			"iostream": "cpp",
+			"ostream": "cpp",
+			"strings.h": "c",
+			"cstdlib": "cpp",
+			"dvvmenv.h": "c",
+			"connector.h": "c",
+			"sstream": "c",
+			"new": "cpp",
+			"functional": "cpp",
+			"*.tcc": "cpp",
+			"tuple": "cpp"
+		}
+	}
+}

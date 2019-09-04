@@ -1,0 +1,9 @@
+package main
+    {   
+        int sumar(int a, int b){
+            return a + b;
+        }
+        void main(string[] args){
+            print(sumar(20,5));
+        }
+    }

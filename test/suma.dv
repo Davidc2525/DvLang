@@ -1,0 +1,23 @@
+
+
+@load_lib("libstd.so");
+package main
+{   
+    native int JAJA(int a);
+    /*
+    string itos(int a){
+        return native_itos(a);
+    }*/
+
+    int suma(int a,int b){
+        return a+b;
+    }
+    
+    int mul(int a,int b){
+        return a*b;
+    }   
+
+    string saluda(string name){
+        return " hola "+name;
+    }
+}

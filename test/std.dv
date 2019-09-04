@@ -1,0 +1,85 @@
+package std
+
+@load_lib "/home/david/DvLangVM/src/libs_std/std/libstd.so";
+
+{
+    native string std_itos(int number);
+    native string std_ftos(float number);
+
+    string itos(int number){
+        string str;
+        str = std_itos(number);
+        return str;
+    }
+
+    /**
+    * Native println, imprime str y al final coloca un salto de linea
+    */
+    native int println(string str);
+    
+    /*borrar, esta mientras hago el operador de referencia e indirecion*/
+    native int println_ref(string  str);
+
+    /**
+    * Native print, imprime str
+    */
+    //native int print(string str);
+
+    /**
+    * Native str_len, tamaño de una cadena
+    */
+    native int strlen(string str);
+
+    /**
+    * DvLang built-in
+    * Comprobar si dos cadenas son identicas.
+    */
+    int str_equal(string v1,string v2){
+        int eq,x;
+        eq = 1;
+        if(strlen(v1) == strlen(v2)){
+            x = 0;
+            while(x < /*call native*/ strlen(v1)){
+                if(v1[x] != v2[x]){
+                    eq = 0;
+                    return eq;
+                }
+                x = x + 1;
+            }
+        }else{
+            eq = 0;
+        }
+
+        return eq;
+    }
+
+    /**
+    * dormir usec minisegundos
+    */
+    native int std_u_sleep(int usec);
+
+    /**
+    * dormir sec segundos
+    */
+    native int std_sleep(int sec);
+
+    /**
+    * reservar memoria
+    */
+    native int std_malloc(int size);
+
+    /**
+    * reservar memoria y llenar de ceros
+    */
+    native int std_calloc(int size);
+
+    /**
+    * cambiar tamaño de la memoria reservada
+    */
+    native int std_realloc(int adr,int new_size);
+
+    /**
+    * liberar memoria reservada
+    */
+    native int std_free(int adr);
+}

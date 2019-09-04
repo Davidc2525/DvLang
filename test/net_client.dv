@@ -1,0 +1,26 @@
+package main
+
+@include "test/std.dv";
+@include "test/net.dv";//funcional
+{
+
+    void escribir(int soc,int c)
+    {   
+        string buff,msg;
+        int x;
+        msg = "{ 'value' : "+c+" }";
+        
+  
+        net_write(soc,msg);
+        std_free(msg);
+        //std_u_sleep(1);        
+     
+        //buff = net_read_s(soc,100);
+        //println("buff: "+buff);
+        escribir(soc,c+1);
+    }
+    
+    void main(){     
+        escribir(net_connect("orchi",2525),0);        
+    }
+}

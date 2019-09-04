@@ -1,0 +1,113 @@
+#include<iostream>
+#include <process/Instructions.h>
+#include <numbers/numbers.h>
+using namespace std;
+COMPILER Program
+CHARACTERS
+
+    tab           = '\u0009'. /*  9 = tabulator */
+    lf            = '\u000a'. /* 10 = line feed */
+    cr            = '\u000d'. /* 13 = carriage return */
+
+   //letter = 'a'..'z' + 'A'..'Z'.
+   //digit = '0'..'9'.
+   whiteSpace = ' ' + '\t' + '\r' +'\n'.
+   char = ANY - "'" - '\\' - whiteSpace.
+
+   stringChar    = ANY - "\"" - '\\' - cr - lf.
+
+   zero          = '0'.
+   zeroToThree   = zero + "123" .
+   octalDigit    = zero + "1234567" .
+   nonZeroDigit  = "123456789".
+   digit         = '0' + nonZeroDigit .
+   hexDigit      = digit + "ABCDEFabcdef" .
+   letter        = 'A' .. 'Z' + 'a' .. 'z' + '_' + '$'.
+
+TOKENS
+
+ident = letter {letter | digit | "_" }.
+number = digit {digit}.
+
+charConst = "'" char "'". //including '\r', '\t', '\n
+stringConst =
+    "\"" { stringChar
+         | "\\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "\'" | "\\"
+                | "u" { "u" } hexDigit hexDigit hexDigit hexDigit
+                | zeroToThree [ octalDigit ] [ octalDigit ]
+                | octalDigit [ octalDigit ]
+                )
+         }
+    "\"".
+
+floatLit =
+    "." digit {digit}
+    [("e" | "E") ["+" | "-"] digit {digit}]
+    [ "F" | "f" | "D" | "d" ]
+  | digit {digit}
+    ( "." {digit}
+      [("e" | "E" ) ["+" | "-"] digit {digit} ]
+      [ "F" | "f" | "D" | "d" ]
+    | ("e" | "E") ["+" | "-"] digit {digit}
+      [ "F" | "f" | "D" | "d" ]
+    | "F" | "f" | "D" | "d"
+    ).
+
+program= "program".
+class= "class".
+if= "if".
+else= "else".
+while= "while".
+read= "read".
+print= "print".
+return= "return".
+void= "void".
+final= "final".
+new= "new".
+
+PRAGMAS
+    option = '#' {letter}  . (. std::cout<<t->val<<" "<<la->val<<std::endl; .)
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "//" TO cr lf
+
+IGNORE whiteSpace
+
+
+PRODUCTIONS
+
+  Program = "package" ident {ConstDecl | VarDecl | ClassDecl}
+  "{" {MethodDecl} "}".
+  ConstDecl = "final" Type ident "=" (number | stringConst) ";".
+  VarDecl = Type ident {"," ident } ";".
+  ClassDecl = "class" ident "{" {VarDecl|MethodDecl} "}".
+  MethodDecl = (Type | "void") ident "(" [FormPars] ")" {VarDecl} Block.
+  //ArrowMethodDecl = (Type | "void") ident "(" [FormPars] ")" "=>" "{" {VarDecl|Statement} "}".
+  FormPars = Type ident {"," Type ident}.
+  Type = ident ["[" "]"].
+  Block = "{" {Statement} "}".
+  Statement = Designator ("=" Expr | ActPars) ";"
+  | "if" "(" Condition ")" Statement
+   ["else" Statement]
+  | "while" "(" Condition ")" Statement
+  | "return" [Expr] ";"
+  | "read" "(" Designator ")" ";"
+  | "print" "(" Expr ["," number] ")" ";"
+  | Block
+  | ";".
+  ActPars = "(" [ Expr {"," Expr} ] ")".
+  Condition = Expr Relop Expr.
+  Relop = "==" | "!=" | ">" | ">=" | "<" | "<=".
+  Expr = ["-"] Term {Addop Term}.
+  Term = Factor {Mulop Factor}.
+  Factor = Designator [ActPars]
+  | ident
+  | number 
+  | floatLit 
+  | stringConst
+  | "new" ident ["[" Expr "]" | ActPars]
+  | "(" Expr ")".
+  Designator = ident {"." ident | "[" Expr "]"}.
+  Addop = "+" | "-".
+  Mulop = "*" | "/" | "%".
+END Program.

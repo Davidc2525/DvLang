@@ -1,0 +1,121 @@
+{
+	"signature": "DVVM",
+    "main": 0,
+    "size": 100,
+    "strings": [
+        "",
+        "",
+        "orchi"
+    ],
+    "libs_symbols":[
+        {
+            "lib_name": "src/libs_std/net/libnet.so",
+            "symbols": [
+                {
+                    "name": "net_create_socket",
+                    "argc": 2
+                },
+                {
+                    "name": "net_accept",
+                    "argc": 1
+                },
+                {
+                    "name": "net_read",
+                    "argc": 3
+                },
+                {
+                    "name": "net_send",
+                    "argc": 2
+                }
+            ]
+        },
+        {
+            "lib_name": "src/libs_std/std/libstd.so",
+            "symbols": [
+                {
+                    "name": "print",
+                    "argc": 1
+                },
+                {
+                    "name": "println",
+                    "argc": 1
+                },
+                {
+                    "name": "std_free",
+                    "argc": 1
+                },
+                {
+                    "name": "std_realloc",
+                    "argc": 2
+                },
+                {
+                    "name": "std_malloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_calloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_u_sleep",
+                    "argc": 1
+                }
+            ]
+        }
+    ],
+	"code": [
+            26,0,0,
+                0,0,
+                12,3,
+
+                39,2,
+                0,2547,
+                0,0,
+                31,
+                12,0,
+
+                11,0,
+                0,1,
+                31,
+                12,1,
+
+                0,0,
+                12,5,
+
+                11,1,
+                84,5,
+                0,50,
+                0,2,
+                31,
+
+                81,
+
+                11,5,
+                0,5,
+                31,
+
+                11,1,
+                39,2,
+                0,3,
+                31,
+
+                11,5,
+                0,6,
+                31,
+
+                0,0,
+                0,11,
+                31,
+
+                15,27,
+
+
+            27,
+            28,
+            29
+	]
+}

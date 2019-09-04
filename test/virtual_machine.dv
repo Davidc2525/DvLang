@@ -1,0 +1,255 @@
+package main
+@include "test/std.dv";
+
+//@load_lib "/home/david/DvLangVM/src/libs_std/std/libstd.so";
+int 
+	ILOAD,
+	ICONS,
+	ISTORE,
+	IGOTO,
+	IWRITE,
+	IADD;
+
+	
+
+/*clases para maquina virtual*/
+class Heap {
+
+	int [] h;
+	int size;
+
+	int get(int index){
+		return this.h[index];
+	}
+
+	void put(int index, int value){
+		this.h[index] = value;
+	}
+
+	Heap construct(int size){
+
+		this.h = new int[size];
+		this.size = size;
+		return this;
+	}
+
+}
+
+class Stack{
+	
+	//int [] heap;
+	Heap heap;
+	int sp;
+	int size;
+
+	void push(int val){
+		if(this.sp - 1 > this.size){
+			// stack overflow
+		}
+		this.heap.put(this.sp,val);
+		this.sp = this.sp + 1;
+
+	}
+	int pop(){
+		int r;
+		this.sp = this.sp - 1;
+		if(this.sp < 0 ){
+			println("stack underflow: "+std_itos(this.sp));
+			this.sp = 0;
+		}
+		r = this.heap.get(this.sp);
+		return r;
+	}
+
+	Stack construct(int size){
+		this.size = size;
+		this.heap = new Heap(size);
+		this.sp = 0;
+		return this;
+	}
+
+}
+
+/**
+* Maquina de pila
+*/
+class Machine { 
+
+	int debug;
+	Heap mem;
+	Stack e_stack;
+	int [] program;
+	int pc;
+	int max_ex;
+
+	int next()
+	{
+		int op_tmp;
+		op_tmp = this.program[this.pc];
+		this.pc = this.pc + 1;
+
+		return op_tmp;
+	}
+
+	void eval(int op)
+	{
+		int op1,op2;
+		
+
+		if(op == ICONS){
+			op1 = this.next();
+
+			if(this.debug==1){
+				println("ICONS: "+std_itos(op1));
+			}	
+
+			this.e_stack.push(op1);
+		}
+		
+
+		if(op == IADD){
+			op2 = this.e_stack.pop();
+			op1 = this.e_stack.pop();	
+			int r;
+			r = op1+op2;	
+
+			if(this.debug==1){
+				println("IADD: "+std_itos(op1)+" + "+std_itos(op2)+" = "+std_itos(r));	
+			}
+
+			this.e_stack.push(r);
+		}
+
+		if(op == ILOAD){
+			int m;
+			op1 = this.next();
+			
+			m = this.mem.get(op1);
+
+
+			if(this.debug==1){
+				println("ILOAD: men["+std_itos(op1)+"] = "+std_itos(m));
+			}
+			this.e_stack.push(m);
+
+		}
+
+		if(op == IWRITE){
+			op1 = this.e_stack.pop();
+
+			if(this.debug==1){
+				println("IWRITE: "+std_itos(op1));
+			}
+			print(op1);
+		}
+
+		if(op == ISTORE){
+			op1 = this.e_stack.pop();
+			op2 = this.next();
+
+			if(this.debug==1){
+				println("ISTORE: men["+std_itos(op2)+"] = "+std_itos(op1));
+			}
+			this.mem.put(op2,op1);
+
+		}
+
+		if(op == IGOTO){
+			
+			op1 = this.next();
+			
+			if(this.debug==1){
+				println("IGOTO: "+std_itos(op1));
+			}
+			this.pc = op1;
+
+
+		}
+	}
+
+	void run()
+	{
+		int x;
+		int op;
+
+		x = 0;
+		while(x<this.max_ex){
+			op = this.next();		
+			if(this.debug == 1){
+				std_u_sleep(100);
+				println("Nueva operacion: "+std_itos(op));	
+				println("-------------------------------");	
+			}
+			this.eval(op);
+			if(this.debug==1){
+				println("-------------------------------");	
+			}
+			x=x+1;
+		}
+
+	}
+
+	void setDebug(int nv){this.debug = nv;}
+
+	Machine construct(int [] program,int max_ex){
+		this.debug = 0;
+		this.pc = 0;
+		this.program = program;
+		this.mem = new Heap(10000);
+		this.e_stack = new Stack(10000);
+		this.max_ex = max_ex;
+
+		return this;
+	}
+}
+
+/*clases para maquina virtual*/
+
+{
+	
+	void main(){	
+		int[] program;
+		
+		println("Iniciando");
+		
+
+		ILOAD   = 0;
+		ISTORE  = 1;
+		IADD    = 2;
+		IGOTO   = 3;
+		ICONS   = 4;
+		IWRITE  = 5;
+
+		
+		program = new int[100];
+
+		program[0] = ICONS;
+		program[1] = 0;
+		program[2] = ISTORE;
+		program[3] = 0;
+
+		program[4] = ILOAD;
+		program[5] = 0;
+		program[6] = ICONS;
+		program[7] = 1;
+		program[8] = IADD;
+		program[9] = ISTORE;
+		program[10] = 0;
+		program[11] = ILOAD;
+		program[12] = 0;
+		program[13] = IWRITE;
+		
+		program[14] = IGOTO;
+		program[15] = 4;
+
+		Machine maquina;
+		maquina = new Machine(program,9+(7*90));
+		maquina.setDebug(0);
+		maquina.run();
+
+		
+		println("fin");
+
+	}
+
+}

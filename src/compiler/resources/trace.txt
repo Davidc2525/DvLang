@@ -1,0 +1,388 @@
+
+First & follow symbols:
+----------------------
+
+Program
+first:   package 
+follow:  EOF 
+
+LoadExp
+first:   "@>" "@include" 
+follow:  ident class final llopen "fun" "@>l" "@load_lib" 
+
+LibLoad
+first:   "@>l" "@load_lib" 
+follow:  ident class final llopen "fun" 
+
+ConstDecl
+first:   final 
+follow:  ident class final llopen "fun" 
+
+VarDecl
+first:   ident "fun" 
+follow:  ident class if while print return void final colon llopen llclose 
+         "fun" "mcode" 
+
+ClassDecl
+first:   class 
+follow:  ident class final llopen "fun" 
+
+FuncDecl
+first:   ident void "fun" 
+follow:  ident void llclose "fun" "native" 
+
+NativeDecl
+first:   "native" 
+follow:  ident void llclose "fun" "native" 
+
+Type
+first:   ident "fun" 
+follow:  ident 
+
+MethodDecl
+first:   ident void "fun" 
+follow:  ident void llclose "fun" 
+
+FormPars
+first:   ident "fun" 
+follow:  pclose 
+
+Block
+first:   llopen 
+follow:  ident if else while print return void colon llopen llclose "fun" 
+         "native" "mcode" 
+
+Statement
+first:   ident if while print return void colon llopen "mcode" 
+follow:  ident if else while print return void colon llopen llclose "fun" 
+         "mcode" 
+
+Designator
+first:   ident 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "=" "fun" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
+
+ActPars
+first:   popen 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+Expr
+first:   ident number stringConst floatLit new popen sinte "-" "!" 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+Mcode
+first:   "mcode" 
+follow:  ident if else while print return void colon llopen llclose "fun" 
+         "mcode" 
+
+Relop
+first:   "==" "!=" ">" ">=" "<" "<=" 
+follow:  ident number stringConst floatLit new popen sinte "-" "!" 
+
+LogicOr
+first:   ident number stringConst floatLit new popen sinte "-" "!" 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+LogicAnd
+first:   ident number stringConst floatLit new popen sinte "-" "!" 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+RelaExpr
+first:   ident number stringConst floatLit new popen sinte "-" "!" 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+AddSub
+first:   ident number stringConst floatLit new popen sinte "-" "!" 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+BitExpr
+first:   ident number stringConst floatLit new popen sinte 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+Addop
+first:   "-" "+" 
+follow:  ident number stringConst floatLit new popen sinte 
+
+BitShiftExpr
+first:   ident number stringConst floatLit new popen sinte 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+Bitop
+first:   "&" "|" "^" 
+follow:  ident number stringConst floatLit new popen sinte 
+
+Term
+first:   ident number stringConst floatLit new popen sinte 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+BitShiftop
+first:   "%" "<<" ">>" 
+follow:  ident number stringConst floatLit new popen sinte 
+
+Factor
+first:   ident number stringConst floatLit new popen sinte 
+follow:  ident number stringConst floatLit if else while print return void new 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
+         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
+         "<<" ">>" "mcode" 
+
+Mulop
+first:   "*" "/" "%" 
+follow:  ident number stringConst floatLit new popen sinte 
+
+ASM
+first:   ident "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" "ICONST" 
+         "DC" "DS" "ORG" "BEG" 
+follow:  "end" 
+
+StatementSequence
+first:   ident "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" "ICONST" 
+         "DC" "DS" "ORG" "BEG" 
+follow:  "end" 
+
+McodeStatement
+first:   ident "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" "ICONST" 
+         "DC" "DS" "ORG" "BEG" 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+Executable
+first:   ident "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" "ICONST" 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+Directive
+first:   ident "DC" "DS" "ORG" "BEG" 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+Label
+first:   ident 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "EQU" "DC" "DS" "ORG" "BEG" 
+
+OneByteOp
+first:   "ADD" "PSH" "POP" "CALL" "ALEN" 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+TwoByteOp
+first:   "LDA" "STORE" "GOTO" "ICONST" 
+follow:  ident number 
+
+Address
+first:   ident number 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+KnownAddress
+first:   ident number 
+follow:  ident "end" "ADD" "PSH" "POP" "CALL" "ALEN" "LDA" "STORE" "GOTO" 
+         "ICONST" "DC" "DS" "ORG" "BEG" 
+
+Load
+first:   "@>" "@include" 
+follow:  ident class final llopen "fun" "@>" "@include" "@>l" "@load_lib" 
+
+
+---------- states ----------
+                 0: letter  1
+                    digit 36
+                      3  2
+                      L  5
+                      L 70
+                      L 25
+                      L 26
+                      L 27
+                      L 28
+                      L 29
+                      L 30
+                      L 31
+                      L 32
+                      L 33
+                      1 34
+                      L 35
+                      L 71
+                      L 72
+                      L 73
+                      L 74
+                      L 75
+                      L 76
+                      L 45
+                      L 46
+                      L 47
+                      L 48
+                      L 49
+                      L 50
+                      L 51
+                      L 77
+E(           i)  1: #E  1
+                 2: char  3
+                 3:   3  4
+E(           c)  4:
+                 5: stringChar  5
+                      L 12
+                      9  6
+                 6: zeroToThree 37
+                    #B 11
+                    #L  5
+                      L  7
+                 7: hexDigit  8
+                      L  7
+                 8: hexDigit  9
+                 9: hexDigit 10
+                10: hexDigit  5
+                11: stringChar  5
+                      L 12
+                      9  6
+E(           s) 12:
+E(           f) 13: digit 13
+                    #O 24
+                    #P 14
+                14: digit 16
+                    #Q 15
+                15: digit 16
+E(           f) 16: digit 16
+                    #O 24
+E(           f) 17: digit 17
+                    #O 24
+                    #P 18
+                18: digit 20
+                    #Q 19
+                19: digit 20
+E(           f) 20: digit 20
+                    #O 24
+                21: digit 23
+                    #Q 22
+                22: digit 23
+E(           f) 23: digit 23
+                    #O 24
+E(           f) 24:
+E(           c) 25:
+E(           c) 26:
+E(           l) 27:
+E(           l) 28:
+E(           b) 29:
+E(           b) 30:
+E(           p) 31:
+E(           p) 32:
+E(           s) 33:
+E(           E) 34:
+E(           c) 35: letter 35
+E(           n) 36: digit 36
+                      L 17
+                    #P 21
+                    #O 24
+                37: #C  5
+                    octalDigit 38
+                      L 12
+                      9  6
+                38: stringChar  5
+                      L 12
+                      9  6
+E(           ") 39:
+E(           ") 40:
+E(           ") 41:
+E(           ") 42:
+E(           ") 43:
+E(           ") 44:
+E(           ") 45:
+E(           ") 46:
+E(           ") 47:
+E(           ") 48:
+E(           ") 49:
+E(           ") 50:
+E(           ") 51:
+E(           ") 52:
+E(           ") 53:
+                54:   L 55
+                55:   L 56
+                56:   L 57
+                57:   L 58
+                58:   L 59
+                59:   L 60
+E(           ") 60:
+E(           ") 61:
+                62:   L 63
+                63:   L 64
+                64:   L 65
+                65:   L 66
+                66:   L 67
+                67:   L 68
+                68:   L 69
+E(           ") 69:
+E(           ") 70: digit 13
+E(           ") 71:   L 39
+E(           ") 72:   L 40
+E(           ") 73:   L 41
+                      L 53
+E(           ") 74:   L 42
+                      L 52
+E(           ") 75:   L 43
+E(           ") 76:   L 44
+                77:   L 78
+                      L 54
+                      L 62
+E(           ") 78:   L 61
+
+---------- character classes ----------
+tab       : 9 
+lf        : 10 
+cr        : 13 
+whiteSpace: 9 .. 10 13 ' ' 
+char      : 0 .. 8 11 .. 12 14 .. 31 '!' .. '&' '(' .. '[' ']' .. 65535 
+stringChar: 0 .. 9 11 .. 12 14 .. '!' '#' .. '[' ']' .. 65535 
+zero      : '0' 
+zeroToThre: '0' .. '3' 
+octalDigit: '0' .. '7' 
+nonZeroDig: '1' .. '9' 
+digit     : '0' .. '9' 
+hexDigit  : '0' .. '9' 'A' .. 'F' 'a' .. 'f' 
+letter    : '$' 'A' .. 'Z' '_' 'a' .. 'z' 
+#A        : '$' 'A' .. 'Z' 'a' .. 'z' 
+#B        : '4' .. '7' 
+#C        : 0 .. 9 11 .. 12 14 .. '!' '#' .. '/' '8' .. '[' ']' .. 65535 
+#D        : '$' '0' .. '9' 'A' .. 'Z' 'a' .. 'z' 
+#E        : '$' '0' .. '9' 'A' .. 'Z' '_' 'a' .. 'z' 
+#F        : 'b' 't' 
+#G        : 'b' 'n' 't' 
+#H        : 'b' 'f' 'n' 't' 
+#I        : 'b' 'f' 'n' 'r' 't' 
+#J        : '"' 'b' 'f' 'n' 'r' 't' 
+#K        : '"' 39 'b' 'f' 'n' 'r' 't' 
+#L        : '"' 39 92 'b' 'f' 'n' 'r' 't' 
+#M        : 'F' 'f' 
+#N        : 'D' 'F' 'f' 
+#O        : 'D' 'F' 'd' 'f' 
+#P        : 'E' 'e' 
+#Q        : '+' '-' 
+

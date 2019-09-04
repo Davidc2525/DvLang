@@ -1,0 +1,20 @@
+package main
+@include "test/std.dv";
+//Razor light-> somewhere else
+
+{
+    string msg(int en_es){
+        return ((?en_es "hola ":"hello ")+(?en_es "mundo":" world") )+" c:";
+    }
+
+	void main(int c,string [] args){
+
+        int en_es;
+
+        en_es = 1;
+        println(msg(en_es));
+        en_es = !en_es;
+        println(msg(en_es));
+
+    }
+}

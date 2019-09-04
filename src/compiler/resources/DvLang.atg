@@ -1,0 +1,393 @@
+#include<iostream>
+#include <process/Instructions.h>
+#include <numbers/numbers.h>
+#include "../compiler/generate/symbol_table/symbol_table.h"
+#include "../compiler/generate/code_generator/code_generator.h"
+using namespace std;
+using namespace DVLANG::COMPILER_::GENERATE;
+using namespace PROCESS;
+
+typedef  void(*type_f)(string) ;
+
+class lib_load_info{
+  public:
+    bool load_any = false;
+    string name;
+};
+
+COMPILER Program
+  SymbolTable   *tab;
+  CodeGenerator   *code;
+  void * _p;
+  Obj * curMethod;
+
+  lib_load_info  * lib_info = new lib_load_info;
+
+  /*eliminar comillas de la cadena*/
+  string onlyContent(string str){
+    return str.substr(1,str.length()-2);
+  }
+  
+  
+  bool NextTokenIsType() {
+    //if (sym != ident) return false;
+    Obj* obj = tab->find(coco_string_create_char(la->val));
+    return obj->kind == Obj::Type;
+  }
+
+  void FunctionCall(Operand * x){
+
+    if(x->obj->native){
+      cout<<" Native call: "<<x->obj->native_id<<endl;
+      code->put(ICONST);
+      code->put(x->obj->native_id);
+      code->put(NCALL);
+
+      if (x->obj->type == tab->noType){
+        cout<<"                         FUNCTION NO TYPE, POPING"<<endl;
+        code->put(POP);
+      }
+    }else{
+      cout<<" Call: "<<x->obj->adr<<endl;
+      code->put(ICONST);
+      code->put(x->adr);
+      code->put(CALL_S);
+
+    }
+
+
+  }
+CHARACTERS
+
+    tab           = '\u0009'. /*  9 = tabulator */
+    lf            = '\u000a'. /* 10 = line feed */
+    cr            = '\u000d'. /* 13 = carriage return */
+
+   //letter = 'a'..'z' + 'A'..'Z'.
+   //digit = '0'..'9'.
+   whiteSpace = ' ' + '\t' + '\r' +'\n'.
+   char = ANY - "'" - '\\' - whiteSpace.
+
+   stringChar    = ANY - "\"" - '\\' - cr - lf.
+
+   zero          = '0'.
+   zeroToThree   = zero + "123" .
+   octalDigit    = zero + "1234567" .
+   nonZeroDigit  = "123456789".
+   digit         = '0' + nonZeroDigit .
+   hexDigit      = digit + "ABCDEFabcdef" .
+   letter        = 'A' .. 'Z' + 'a' .. 'z' + '_' + '$'.
+
+TOKENS
+
+ident = letter {letter | digit | "_" }.
+number = digit {digit}.
+
+charConst = "'" char "'". //including '\r', '\t', '\n
+stringConst =
+    "\"" { stringChar
+         | "\\" ( "b" | "t" | "n" | "f" | "r" | "\"" | "\'" | "\\"
+                | "u" { "u" } hexDigit hexDigit hexDigit hexDigit
+                | zeroToThree [ octalDigit ] [ octalDigit ]
+                | octalDigit [ octalDigit ]
+                )
+         }
+    "\"".
+
+floatLit =
+    "." digit {digit}
+    [("e" | "E") ["+" | "-"] digit {digit}]
+    [ "F" | "f" | "D" | "d" ]
+  | digit {digit}
+    ( "." {digit}
+      [("e" | "E" ) ["+" | "-"] digit {digit} ]
+      [ "F" | "f" | "D" | "d" ]
+    | ("e" | "E") ["+" | "-"] digit {digit}
+      [ "F" | "f" | "D" | "d" ]
+    | "F" | "f" | "D" | "d"
+    ).
+
+program= "program".
+class= "class".
+if= "if".
+else= "else".
+while= "while".
+//read= "read".
+//print= "print".
+return= "return".
+void= "void".
+final= "final".
+new= "new".
+add = "+".
+pclose = ")".
+
+PRAGMAS
+    option = '#' {letter} . (. std::cout<<t->val<<" "<<la->val<<std::endl; .)
+
+COMMENTS FROM "/*" TO "*/" NESTED
+COMMENTS FROM "--" TO "--" NESTED
+COMMENTS FROM "//" TO "\n"
+
+IGNORE whiteSpace
+
+
+PRODUCTIONS
+
+  Program = "package" ident  (..) ( [LoadExp] [LibLoad] ) {ConstDecl | VarDecl | ClassDecl}  (.  .)
+  "{" (.  tab->openScope();  .)  {ClassDecl|MethodDecl|NativeDecl} "}".
+  
+  ConstDecl (. Struct * _type = new Struct(0); .) = "final" Type<_type,0> ident "=" (number | stringConst) ";".
+
+  VarDecl (. bool ref = false;  Obj * vd; Struct * _type = new Struct(0); .)
+  = Type<_type,&ref>  (.cout<<"vd type: "<<_type->kind;  .)
+      ident (. vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type);  
+               vd->is_ref = ref;
+               ref=false;
+               cout<<", name: "<<vd->name<<", lvl: "<<vd->level<<", adr: "<<vd->adr<<" ref: "<<vd->is_ref<<endl; 
+            .)
+            
+      {"," ident (. vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type); 
+                    vd->is_ref = ref;
+                    ref=false; 
+                    cout<<"   type: "<<_type->kind<<", name: "<<vd->name<<", lvl: "<<vd->level<<", adr: "<<vd->adr<<" ref: "<<vd->is_ref<<endl; 
+                  .)  } ";".
+
+  ClassDecl = "class" ident "{" {(VarDecl)} "}".
+
+  NativeDecl  (.  bool ref = false;  Obj * native; int npars = 0;  Struct * _type = new Struct(0); .)
+    = "native" (Type<_type,&ref> | "void" (. _type = tab->noType; .) )
+      ident  (.
+              string symbol_name = string(coco_string_create_char(t->val));
+              native = tab->insert(Obj::Func, symbol_name, _type);
+              native->native=true;
+
+              tab->openScope();
+
+              .)
+     "(" [FormPars<npars>] ")" (.
+
+        if(lib_info->load_any){
+          Obj * nc = tab->find(symbol_name);
+          nc->nPars = npars;
+
+          tab->lib_symbols->put(lib_info->name,symbol_name,npars);
+
+          native->native_id = tab->lib_symbols->get_symbl(symbol_name);
+          cout<<"Register native: lib "<<lib_info->name<<" symbol: "<<symbol_name<<" args"<<nc->nPars<<" native id: "<< native->native_id<<endl;
+
+        }else{
+
+          SemErr(L"No se ha cargao ninguna libreria aun.");
+
+        }
+
+        tab->closeScope();
+      .) ";" .
+
+  MethodDecl (.  bool ref = false;  int p = 0; int npars = 0;  string name = ""; Struct * _type = new Struct(0); .)
+    = (Type<_type,&ref> | "void" (. _type = tab->noType; .) ) ident (. name = coco_string_create_char(t->val),
+                                      curMethod = tab->insert(Obj::Meth, name, _type);
+                                      curMethod->adr = CodeGenerator::pc;
+                                      tab->openScope(); .)
+
+       "(" [FormPars<npars>] ")" (. if(name=="main"){
+                                      CodeGenerator::main = CodeGenerator::pc;
+                                      cout<<"main: "<<CodeGenerator::main<<", npars: "<<npars<<endl;
+                                    }
+
+                                    cout<<"func: "<<name<<", npars: "<<npars<<", adr: "<< tab->find(name)->adr<<" kind: "<<curMethod->type->kind<<endl;
+                                    cout<<" kind: "<<curMethod->kind<<endl;
+
+                                    code->put(ENTER);
+                                    p = code->pc;
+                                    code->put(0);
+                                    code->put(0);
+                                  .)
+        Block (.
+          //ajustar en el codigo, el numero de parametros y de variables
+          code->program[p]   = npars;
+          code->program[p+1] = tab->curScope->nVars;
+
+          tab->closeScope();
+
+          if(curMethod->type == tab->noType){
+            code->put(EXIT);
+            code->put(RET);
+          }
+
+          if(name=="main"){
+            code->put(HLT);
+          }
+        .).
+
+  //ArrowMethodDecl = (Type<_type> | "void") ident "(" [FormPars] ")" "=>" "{" {VarDecl|Statement} "}".
+
+  FormPars<int & npars> (. bool ref = false; Obj * vd; Struct * _type = new Struct(0); .)
+    = Type<_type,&ref> ident (. npars++; vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type); 
+       vd->is_ref = ref;
+       cout<<vd->name<<" is ref: "<<vd->is_ref<<endl; 
+       ref = false;
+       
+        .)
+      {","  Type<_type,&ref> ident (.  npars++; vd = tab->insert(Obj::Var, coco_string_create_char(t->val), _type);
+        vd->is_ref = ref;
+        cout<<vd->name<<" is ref: "<<vd->is_ref<<endl; 
+        ref = false;
+      .)}.
+
+ 
+  Type<Struct * _type,bool * ref> (. string type; bool is_ref = false; .)
+    =
+        ident         (. type = string(coco_string_create_char(t->val)); .)
+        ["[" "]"      (. _type->elemType = _type; .) ] 
+        ["*"          (. is_ref = true; *ref = is_ref;.)] (. *_type = *tab->find(type)->type;  .)
+        .
+
+  Block = "{" {IF(NextTokenIsType()) VarDecl|Statement} "}".
+
+  Statement (. Operand * x = new Operand(0);.)
+    = Designator<x> ( "=" Expr<x> | ActPars<x> (. FunctionCall(x); .)  ) ";"
+
+  | "if" "(" Condition<x> ")" Statement
+   ["else" Statement]
+  | "while" "(" Condition<x> ")" Statement
+  | "return" (Expr<x> (. if (curMethod->type == tab->noType){
+                            SemErr(L"void method must not return a value");
+                          }
+                          else if (!x->type->assignableTo(curMethod->type)){
+                            cout<<x->type->kind<<" > "<<curMethod->type->kind<<endl;
+                            SemErr(L"type of return value must match method type");
+                          }
+                      .)
+                      | (. if (curMethod->type != tab->noType) SemErr(L"return value expected"); .)
+                      ) (. code->put(EXIT);
+                           code->put(RET); .)";"
+
+  //| "read" "(" Designator<x> ")" ";"
+  //| "print" "(" Expr<x> ["," number] ")" ";"
+  | Block
+  | ";".
+
+  /*Assignment<Operand * x> (. Operand * y; .)
+    = Designator <x> "=" Expr <y> ";".*/
+
+  ActPars<Operand * x> (.  int aPars = 0; Operand * ap = new Operand(0); Obj * fp = x->obj->locals; .)
+    = "(" [ Expr<ap> (. aPars++; .) {"," Expr<ap> (.  aPars++; .) } ] ")" (. cout<<"call function, nArgs: "<<aPars<<endl; .).
+
+  Condition<Operand * x> = Expr<x> Relop Expr<x>.
+
+  Relop = "==" | "!=" | ">" | ">=" | "<" | "<=".
+
+  Expr<Operand * x> (. bool one = true; bool strcat = false; Operand * y = new Operand(0); int  op = 0; .)
+   = ["-"] Term<x> (. if(la->kind!=_add && x->type != tab->stringType) {  code->load(x); }.) {Addop<&op> Term<y>  
+                            (.
+                             one = false;
+                             cout<<"x kind: "<<x->type->kind<<endl;
+                             cout<<"y kind: "<<y->type->kind<<endl;
+
+                            if(x->type->kind != Struct::Int ||  y->type->kind != Struct::Int){
+                                strcat=true;
+                            }
+
+                            if(strcat&& x->type->kind == Struct::Int ){
+                                /*code->load(x);
+                                code->put(ITOS);*/
+                            }else if(x->type->kind == Struct::String ){
+                                /*code->load(x);*/
+                            }
+
+                            if(strcat&& y->type->kind == Struct::Int ){
+                                /*code->load(y);
+                                code->put(ITOS);*/
+                            } else if(y->type->kind == Struct::String ){
+                                /*code->load(y);*/
+                            }
+
+                            if(!strcat){
+                            
+                                code->load(x);
+                                code->load(y);
+                                
+                            }
+
+                            if(strcat&&op == ADD){
+                                op = STRCAT;
+                            }
+
+                            code->put(op);
+                            cout<<"make op: "<<op<<endl;
+
+                            .)
+                    } .
+
+  Term<Operand *x>  (. Operand * y = new Operand(0); int  op = 0; .)
+    = Factor<x> (. .) {Mulop<&op> Factor<y>  (. code->load(x); code->load(y); code->put(op); cout<<"make op: "<<op<<endl; .)}.
+
+  Factor<Operand *x>  (. string name; .)
+    =
+   
+   Designator<x> [ (. cout<<"factor func call"<<endl; .) ActPars<x> (. FunctionCall(x); .)]
+
+  | number (. *x = *new Operand(stoi(coco_string_create_char(t->val)));  /*code->load(x);*/ printf("number: %s\n",coco_string_create_char(t->val)); .)
+
+  | floatLit (. cout<<"float: "<<coco_string_create_char(t->val)<<", bit: "<<NUMBERS::Numbers::FloatToBitInt(stof(coco_string_create_char(t->val)))<<endl; .)
+
+  | stringConst (.
+                  int index = code->string_set->put(onlyContent(string(coco_string_create_char(t->val))));
+                  *x = *new Operand(index);
+                  x->type = tab->find("string")->type;
+
+                  code->put(39);
+                  code->put(index);
+                  x->val = index;
+                  printf("regiter: %s index: %d type: %d\n",coco_string_create_char(t->val),index,x->type->kind);
+                .)
+
+  | "new" ident [ "[" Expr<x> "]" /*| ActPars<x> (. FunctionCall(x); .) */ ]
+
+  | "(" Expr<x> ")" 
+  
+  .
+
+  Designator<Operand *x> = (. string name; .)
+
+    ident  (.
+              
+              name = coco_string_create_char(t->val);
+              Obj * obj = tab->find(name); // obj.kind = Var | Con
+              *x = *new Operand(obj); // x.kind = Local | Static | Con
+              if(obj->kind== Obj::Meth || obj->kind == Obj::Func){
+
+                cout<<"func Designator ident: "<<x->obj->name<<" adr:"<<x->obj->adr<<endl;
+
+              }else{
+                //code->load(x); // x.kind = Stack
+                //cout<<"d load: "<<name<<endl;
+
+              }
+            .)
+
+    {"." ident | "[" Expr<x> "]"}.
+
+  Addop<int * op> = "+" (. *op=ADD; .) | "-" (. *op=SUB; .).
+
+  Mulop<int * op> = "*" (. *op=MUL; .) | "/"  (. *op=DIV; .) | "%" (. *op=MOD; .).
+
+  LoadExp = {Load} .
+  Load = 
+        ("@>"|"@include") 
+        stringConst (. string i_file(coco_string_create_char(t->val)); cout<<"include: "<<i_file<<endl; 
+        ((type_f) _p)(onlyContent(i_file)); .)  ";".
+
+  LibLoad = ("@>l"|"@load_lib")   stringConst
+      (.
+        if(lib_info->load_any){
+          SemErr(L"No se puede cargar mas de una libreria por archivo.");
+        }
+        string lib_path(onlyContent(coco_string_create_char(t->val)));
+        lib_info->name = lib_path;
+        lib_info->load_any=true;
+        cout<<"lib_load: "<<lib_info->name<<endl;
+      .)
+       ";" .
+END Program.

@@ -1,0 +1,32 @@
+package net
+
+@load_lib "/home/david/DvLangVM/src/libs_std/net/libnet.so";
+
+
+class Read {
+	string data;
+	int len;
+}
+
+{
+    native int net_create_socket(string adr, int port);
+
+    native int net_accept(int socket);
+    
+    //native int net_read(int socket, string  buff, int len);
+
+    native string net_read_s(int socket, int len);
+
+    native Read net_read_o(int socket, int len);
+    
+    native int net_send(int socket, string data);
+    
+    native int net_write(int socket, string data);
+     
+    native int net_connect(string adr, int port);
+    
+   
+    
+    /*TODO faltan otras funciones*/
+    
+}

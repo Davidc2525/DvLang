@@ -1,0 +1,12 @@
+package main
+@include "test/std.dv";
+{   
+    string hola(string mundo){
+        return "hola " + mundo;
+    }
+    void main(string[] args){
+        
+        println(hola("mundo c:"));
+
+    }
+}
