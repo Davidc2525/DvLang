@@ -6,7 +6,6 @@
 #include <bitset>
 
 
-
 namespace NUMBERS
 {
 

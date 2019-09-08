@@ -1,9 +1,9 @@
 
 
 #include <iostream>
-#include <stdlib.h>
+
 #include "heap.h"
-#include <array>
+//#include <array>
 using namespace std;
 
 namespace Heap

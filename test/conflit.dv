@@ -38,7 +38,7 @@ class nc {
 {
 
 
-		void main(string[]args)
+		void main()
 		{
 			nc c;
 			

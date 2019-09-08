@@ -204,7 +204,7 @@ class Machine{
 
 		return eq;
 	}
-	void main(string [] args)
+	void main()
 	{	
 		User [] users;
 		string nc,nc2;

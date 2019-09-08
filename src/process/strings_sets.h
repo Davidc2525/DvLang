@@ -1,6 +1,7 @@
 
 #ifndef STRINT_SET_H
 #define STRINT_SET_H
+#include <stdlib.h>
 #include <iostream>
 
 using namespace std;

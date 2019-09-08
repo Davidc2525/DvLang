@@ -1,4 +1,4 @@
-# DvLang :tada:	:confetti_ball:
+# DvLang :tada: :confetti_ball:
 Lenguaje de programacion DvLang
 
 # Requerimientos
@@ -12,16 +12,42 @@ Lenguaje de programacion DvLang
 - libffi
 - rapidjson
 
+## En adicion a los requerimientos anteriores, compilacion para Windows
+- mingw-w64
+- [mingw-std-threads](https://github.com/meganz/mingw-std-threads) *solo es necesario cuando la compilacion se lleva a cabo en versiones muy antiguas de Windows* 
+
+
 # Descarga de codigo fuente y compilacion
 Luego de instalar los requerimientos, procedemos con la compilacion del codigo fuente.
+
 ```bash
-$ git clone https://github.com/Davidc2525/DvLang.gitt
+$ git clone https://github.com/Davidc2525/DvLang.git
 $ cd DvLang
+$ mkdir out
 $ make 
 $ cd src/compiler
 $ make
 $ cd ../../
 ```
+
+Si la compilacion se lleva a cabo en windows
+
+
+```bash
+$ git clone https://github.com/Davidc2525/DvLang.git
+$ cd DvLang
+$ mkdir out
+$ make -f Makefile.win
+$ cd src/compiler
+$ make
+$ cd ../../
+```
+
+__Nota:__ *make -f Makefile.win* se use igual para las otras partes donde se compila parte del codigo.
+
+__Nota:__ En __.out/__  se encuentran los binarios para linux y windows, de igual forma necesita tener las librerias requeridas instaladas o disponibles en el sistema.
+
+
 # Programando en DvLang 
 
 
@@ -39,7 +65,7 @@ Luego de compilar es hora de programar en DvLang
             return a + b;
         }
         
-        void main(string[] args){
+        void main(){
             print(sumar(20,5));
         }
     }
@@ -154,7 +180,7 @@ archivo: __DvLang/test/dvlang_native.dv__ *DvLang*
         string hola(string mundo){
             return "hola " + mundo;
         }
-        void main(string[] args){
+        void main(){
             
             println(hola("mundo c:"));
         }
@@ -231,7 +257,7 @@ class Usuario {
 
 {
 
-    void main(string[]args){
+    void main(){
         Usuario n1;
 
         u1 = new Usuario("Lola",25);
@@ -287,7 +313,7 @@ class Usuario {
 
 {
 
-    void main(string[]args){
+    void main(){
         int cantidad,x;
         Usuario u;
         Usuario [] users;
@@ -365,7 +391,7 @@ Archivo: __DvLang/test/dvlang_flow.dv__ *DvLang*
 package main
 @include "test/std.dv";
 {   
-    void main(string[] args){
+    void main(){
         int x;
 
         x = 25;
@@ -470,6 +496,10 @@ Los "__(__"  "__)__" son opcionales en las sentencias *if* y *while*. Los "__{__
         print(x+1);
     }
 ```
+
+# Proxima liberacion **
+
+- Llamadas a funciones como corrutinas
 
 # Contribuye
 

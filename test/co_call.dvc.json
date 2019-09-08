@@ -1,13 +1,65 @@
 {
 	"signature": "DVVM",
-	"main": 20,
-    "size": 42,
+	"main": 21,
+    "size": 44,
+    "globals": 0,
     "strings":[
         "Dormir 3 segundos\n",
         "Dormir 1 segundos\n"
     ],
+    "libs_symbols": [
+        {
+            "lib_name": "/home/david/DvLangVM/src/libs_std/std/libstd.so",
+            "symbols": [
+                {
+                    "name": "std_itos",
+                    "argc": 1
+                },
+                {
+                    "name": "std_ftos",
+                    "argc": 1
+                },
+                {
+                    "name": "println",
+                    "argc": 1
+                },
+                {
+                    "name": "println_ref",
+                    "argc": 1
+                },
+                {
+                    "name": "strlen",
+                    "argc": 1
+                },
+                {
+                    "name": "std_u_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_sleep",
+                    "argc": 1
+                },
+                {
+                    "name": "std_malloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_calloc",
+                    "argc": 1
+                },
+                {
+                    "name": "std_realloc",
+                    "argc": 2
+                },
+                {
+                    "name": "std_free",
+                    "argc": 1
+                }
+            ]
+        }
+    ],
 	"code": [
-            26,2,
+            26,2,0,
                 11,0,
                 7,
 
@@ -17,7 +69,7 @@
                 6,
 
                 0,1,
-                0,3,
+                0,6,
                 31,
                 
                 11,1,
@@ -25,7 +77,7 @@
             27,
             28,
 
-            26,0,
+            26,0,0,
                 
 
                 0,25,
@@ -40,7 +92,7 @@
                 6,                
 
                 0,3,
-                0,3,
+                0,6,
                 31,
             27,
             28,

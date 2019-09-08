@@ -16,7 +16,7 @@ class Usuario{
 
 {
 
-    void main(string[]args){
+    void main(){
         Usuario u1;
 
         u1 = new Usuario("Lola",25);

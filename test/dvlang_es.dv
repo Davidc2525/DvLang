@@ -10,7 +10,7 @@ clase U{
     int suma(int a,int b){
         retornar a+b;
     }
-    nada principal(string[]argumentos){
+    nada principal(){
 
         U u;
         u = nuevo U();

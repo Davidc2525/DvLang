@@ -1,3 +1,4 @@
+
 #include "process.h"
 #include "DvVmEnv.h"
 namespace PROCESS
@@ -20,14 +21,34 @@ Lib::Lib(char *lib_name)
 */
 void Lib::load_func(int index_abs,MetaFunc *info)
 {
-    info->func = dlsym(handle, info->name);
+    #ifdef _WIN32 
+       info->func = (void*) GetProcAddress((HINSTANCE)handle, info->name);
+    #elif __linux__
+        info->func = dlsym(handle, info->name);
+    #elif __unix__ 
+    #elif __APPLE__
+    #endif
+    
     char *error;
+    
+    #ifdef _WIN32 
+        if (!info->func)
+        {
+            
+            cout << "Error al cargar func: " << info->name <<  endl;
+            exit(1);
+        } 
+    #elif __linux__
+        if ((error = dlerror()) != NULL)
+        {
+            
+            cout << "Error al cargar func: " << info->name << ", error: " << error << endl;
+            exit(1);
+        } 
+    #elif __unix__ 
+    #elif __APPLE__
+    #endif
 
-    if ((error = dlerror()) != NULL)
-    {
-        cout << "Error al cargar func: " << info->name << ", error: " << error << endl;
-        exit(1);
-    } 
 
     funs[index_abs] = info;
     //index++;
@@ -122,10 +143,26 @@ LibLoad::LibLoad()
 */
 void LibLoad::load(Lib *lib)
 {
-    lib->handle = dlopen(lib->name, RTLD_NOW | RTLD_GLOBAL);
+
+    #ifdef _WIN32 
+        lib->handle = LoadLibrary(lib->name);
+    #elif __linux__
+        lib->handle = dlopen(lib->name, RTLD_NOW | RTLD_GLOBAL);
+    #elif __unix__ 
+    #elif __APPLE__
+    #endif
+
+
     if (!lib->handle)
     {
-        cout << "Error al cargar libreria: " << dlerror() << endl;
+        #ifdef _WIN32 
+            cout << "Error al cargar libreria: "<<lib->name << endl;
+        #elif __linux__
+            cout << "Error al cargar libreria: " << dlerror() << endl;
+        #elif __unix__ 
+        #elif __APPLE__
+        #endif
+
     }
 
     libs.insert(std::make_pair(lib->name, lib));

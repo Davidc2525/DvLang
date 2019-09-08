@@ -7,6 +7,21 @@
 #include <iostream>
 #include <unistd.h>
 
+
+
+#ifdef _WIN32 
+    
+    #if BUILDING_DLL
+    #define DLLIMPORT __declspec(dllexport)
+    #else
+    #define DLLIMPORT __declspec(dllimport)
+    #endif
+
+#elif __linux__
+#elif __unix__ 
+#elif __APPLE__
+#endif
+
 using namespace std;
 
 void __attribute__((constructor)) std_init(void)

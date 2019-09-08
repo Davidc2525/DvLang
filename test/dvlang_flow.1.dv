@@ -1,7 +1,7 @@
 package main
 @include "test/std.dv";
 {   
-    void main(string[] args){
+    void main(){
         int x;
         string z;
         z = "david";

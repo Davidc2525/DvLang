@@ -31,7 +31,6 @@ namespace DVLANG
                     Func = 9,
                     Meth = 10;
 
-                
                 int kind;           // None, Int, String, Arr, Class
                 Struct * elemType = NULL;  // Arr: element type
                 int nFields;        // Class: number of fields

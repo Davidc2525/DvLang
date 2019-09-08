@@ -31,7 +31,7 @@ package main
 		return len;
 	}
 
-	void main(string[]args){
+	void main(){
 		int a,b,r;
 		
 		a = 20;

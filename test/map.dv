@@ -1,6 +1,5 @@
 package main
 @include "test/std.dv";
-int a;
 //Razor light-> somewhere else
 class MapSS {
 
@@ -11,11 +10,10 @@ class MapSS {
 	string [] values;
 
 	int indexOfKey(string key){
-		int x,index,found;
+		int x,found;
 		found = 0;
 		x = 0;
 
-		index = -1;
 		while x < this.size - 1 {
 			
 			if(str_equal(key,this.keys[x]) == 1){
@@ -25,7 +23,7 @@ class MapSS {
 			x = x+1;
 		}
 
-		return index;
+		return -1;
 	}
 
 	void put(string key, string value){
@@ -78,7 +76,7 @@ class MapSS {
 		 t2();
 		 return 25;
 	}
-	void main(string[]args){
+	void main(){
 		
 		println("Iniciando mapa");
 

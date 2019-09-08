@@ -13,7 +13,7 @@ package main
   
         net_write(soc,msg);
         std_free(msg);
-        //std_u_sleep(1);        
+        std_sleep(1);        
      
         //buff = net_read_s(soc,100);
         //println("buff: "+buff);
@@ -21,6 +21,6 @@ package main
     }
     
     void main(){     
-        escribir(net_connect("orchi",2525),0);        
+        escribir(net_connect("orchi",2526),0);        
     }
 }

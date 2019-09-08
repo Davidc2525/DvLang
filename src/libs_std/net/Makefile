@@ -7,7 +7,7 @@ PROTO_BUF = -pthread -lprotobuf -pthread -lpthread
 FLAGS = $(EFLAGS) -I../../ -Wall  -Wextra -g  -Dcpu_arch=64
 
 CFLAGS = -std=c11 $(FLAGS)
-CXXFLAGS = -std=c++17 $(FLAGS)
+CXXFLAGS = -std=c++11 $(FLAGS)
 #CXXFLAGS="-std=c++17 $(FLAGS) $(pkg-config --cflags protobuf)"
 #LIBS="$(pkg-config --libs protobuf)"
 

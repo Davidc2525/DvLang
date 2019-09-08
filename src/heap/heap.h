@@ -4,9 +4,11 @@
 
 #include "../types.h"
 #include <iostream>
-#include <iterator>
-#include <array>
-#include <inttypes.h>
+#include <stdlib.h>
+//#include <iterator>
+//#include <array>
+//#include <inttypes.h>
+#include <cstdint> 
 
 using namespace std;
 
@@ -21,12 +23,20 @@ namespace Heap {
 
         string toString() {
             string ts;
-            ts += "from: ";
-            ts += to_string(from);
-            ts += ", to: ";
-            ts += to_string(to);
-            ts += ", len: ";
-            ts += to_string(len);
+            #ifdef _WIN32 
+            #elif __linux__
+                // linux
+                ts += "from: ";
+                ts += to_string(from);
+                ts += ", to: ";
+                ts += to_string(to);
+                ts += ", len: ";
+                ts += to_string(len);
+            #elif __unix__ // all unices, not all compilers
+                // Unix
+            #elif __APPLE__
+                // Mac OS, not sure if this is covered by __posix__ and/or __unix__ though...
+            #endif
             return ts;
         }
     };

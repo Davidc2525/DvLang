@@ -42,11 +42,13 @@ class Socket{
 
 	Connection accept()
 	{	
-		println("aceptando");
+		println("aceptando, socket s: "+this.sock);
 		Connection con;
 		int sock_con;
 
 		sock_con = net_accept(this.sock);
+		println("aceptado: "+sock_con);
+
 		con = new Connection(sock_con);
 		return con;
 	}

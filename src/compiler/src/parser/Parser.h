@@ -188,9 +188,15 @@ SymbolTable   *tab;
       }
     }else{
       cout<<" Call: "<<x->obj->adr<<endl;
-      code->put(ICONST);
-      code->put(x->adr);
-      code->put(CALL_S);
+      if(true){//modo stack
+          code->put(ICONST);
+          code->put(x->adr);
+          code->put(x->co_call?CO_CALL:CALL_S);
+
+      }else{// modo next
+          code->put(CALL);
+          code->put(x->adr);
+      }
     }
   }
 

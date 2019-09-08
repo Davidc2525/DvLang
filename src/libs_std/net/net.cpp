@@ -73,7 +73,7 @@ extern "C"
 
         int n = _socket_->_read(s_fd, buffer, len);
 
-        intdv adr = c_str_to_dv_srt(vm.process->heap, buffer);
+        intdv adr = STRING::String::c_str_to_dv_srt(vm.process->heap, buffer);
 
         free(buffer);
         return adr;
@@ -85,7 +85,7 @@ extern "C"
 
         int n = _socket_->_read(s_fd, buffer, len);
 
-        intdv adr = c_str_to_dv_srt(vm.process->heap, buffer);
+        intdv adr = STRING::String::c_str_to_dv_srt(vm.process->heap, buffer);
 
         /*Class Read en DvLang
         
@@ -116,7 +116,7 @@ extern "C"
 
         int n = _socket_->_read(s_fd, buffer, len);
 
-        intdv adr = c_str_to_dv_srt(vm.process->heap, buffer);
+        intdv adr = STRING::String::c_str_to_dv_srt(vm.process->heap, buffer);
 
         //al puntero se le asigna la direccion
         //en memoria de cadena creada por lectura

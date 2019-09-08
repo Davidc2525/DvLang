@@ -1,20 +1,179 @@
 package main
 @include "test/std.dv";
 //Razor light-> somewhere else
+class Suma{
+    int c;
+    int call(int  a, int b){return a+b+this.c;}
+    Suma construct(int nc){
+        this.c = nc;
+        return this;
+    }
+}
+class NONO{
+    int x;
+    void su(){
+       while 1{
+            println("me lleva: "+this.x);
+            std_u_sleep(50+this.x);
+            //this.x = this.x+1;
+       }
+    }
 
+    NONO construct(int x){
+        this.x = x;
+        return this;
+    }
+}
+
+class Lock{
+    int bussy;
+
+    void lock(){
+        //println("blokeando");
+        while this.bussy {
+            std_u_sleep(10);
+            //println("esperando para blokear");
+        }
+        //println("blokeado");
+        
+        this.bussy = 1;
+    }
+
+    void unlock(){
+        this.bussy = 0;
+    }
+
+    Lock construct(){
+        this.bussy = 0;
+        return this;
+    }
+}
+int t_ids;
+class Runnable {
+
+    void run(int id){
+        println("job: "+id);
+    }
+}
+class Thread {
+    int active;
+    int id;
+    Runnable job;
+
+
+    void do(){
+        while this.active {
+            std_u_sleep(100);
+            this.job.run(this.id);
+        }
+    }
+
+    void kill(){
+        println("killing thread id: "+this.id);
+        this.active = 0;
+    }
+
+    Thread construct(Runnable j){
+        this.id = t_ids;
+        t_ids=t_ids+1;
+        this.job = j;
+        this.active=1;
+        co this.do();
+        return this;
+    }
+}
+
+Lock l;
+int inc;
 {
     string msg(int en_es){
         return ((?en_es "hola ":"hello ")+(?en_es "mundo":" world") )+" c:";
     }
 
-	void main(int c,string [] args){
+    int arlen(int [] a){
+		int len;
+		len = 0;
 
-        int en_es;
+		mcode begin
+           LDA 0
+           ALEN 
+           STORE 1
+		end
 
-        en_es = 1;
-        println(msg(en_es));
-        en_es = !en_es;
-        println(msg(en_es));
+		return len;
+	}
+    int ncnc(){
+        return 25;
+    }
+   void suma(int id){
+       int x,y;
+       x=0;
+       y=1;
+       while y {
+           if x % 100 ==0{
+               println("co id: "+id+" x: "+x);
+           }
+            if id != 4{
+                std_u_sleep(10);
+            }
+            if id == 4 {
+                if x > 1000000 {
+                    y=0;
+                }
+            }
+           x=x+1;
+       }
+       
+   }
+   void incrementar(int id){
+       int x;
+       x =0;
+       while x<10000 {
+           l.lock();
+           println("co id: "+id+" inc: "+inc);
+           inc = inc+1;
+           l.unlock();
+           x=x+1;
+       }
+   }
 
+	void main(){
+       // NONO n,n2;
+       l = new Lock();
+       inc = 1;
+       
+    /* co incrementar(1);
+     co incrementar(2);
+      incrementar(3);*/
+
+      Runnable r1;
+      r1 = new Runnable();
+
+      Thread t1,t2,t3;
+      t1 = new Thread(r1);
+      std_u_sleep(100);
+      t2 = new Thread(r1);
+      std_u_sleep(100);
+      t3 = new Thread(r1);
+      std_u_sleep(100);
+
+      std_sleep(4);
+      t2.kill();
+
+
+     /*
+        co suma(1);
+    std_u_sleep(500);
+        co suma(2);
+    std_u_sleep(10000);
+        co suma(3);
+    std_u_sleep(5000);
+    suma(4);
+*/
+    while 1 {
+        println("inc: "+inc);
+        println("durmiendo 10 segundos");
+        std_sleep(2);
+    }
     }
 }

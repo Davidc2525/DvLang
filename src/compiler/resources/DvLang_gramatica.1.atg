@@ -108,9 +108,15 @@ COMPILER Program
       }
     }else{
       cout<<" Call: "<<x->obj->adr<<endl;
-      code->put(ICONST);
-      code->put(x->adr);
-      code->put(CALL_S);
+      if(true){//modo stack
+          code->put(ICONST);
+          code->put(x->adr);
+          code->put(x->co_call?CO_CALL:CALL_S);
+
+      }else{// modo next
+          code->put(CALL);
+          code->put(x->adr);
+      }
     }
   }
 CHARACTERS
@@ -270,7 +276,7 @@ PRODUCTIONS
   	  			 clazz = tab->insert(Obj::Type,class_name,type);
   	  		 .)
   	  "{"    (.  tab->openScope(); cout<<"class decl: "<<class_name<<" scope opener: "<<tab->curLevel<<endl; .)
-  	   { (. vd = (Obj*)malloc(sizeof(Obj)); .)
+  	   { (. vd = new Obj(); .)
       (
             
             (IF(followedByColon())VarDecl<vd>   (.
@@ -443,10 +449,10 @@ PRODUCTIONS
    //Block (. Obj * ob = new Obj(); .) 
    //= "{" {IF(NextTokenIsType()) VarDecl<ob>|Statement} "}".
   
-  Statement     (. Operand * x = new Operand(0); Operand * y = new Operand(0); .)
-   = Designator<x>  
+  Statement     (. int co_call =0; Operand * x = new Operand(0); Operand * y = new Operand(0); .)
+   = ["co" (. co_call = 1; .)] Designator<x>  
     (
-    	ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr);code->put(CALL_S);*/ /*code->load(x); */  cout<<"call procedure: "<<x->obj->name<<" : "<<x->obj->adr<<endl; 
+    	ActPars<x> (. x->co_call = co_call; FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr);code->put(CALL_S);*/ /*code->load(x); */  cout<<"call procedure: "<<x->obj->name<<" : "<<x->obj->adr<<endl; 
                     if (x->obj->type != tab->noType){
                         cout<<"-------------- CALL PROCEDURE POPING"<<endl;
                         code->put(POP);
@@ -747,7 +753,7 @@ PRODUCTIONS
                       code->put(ITOF);
                       y->type =SymbolTable::floatType;
                   }
-                  
+
                   switch(op){
                     case ADD:{
                       code->put(FADD);
@@ -825,7 +831,7 @@ PRODUCTIONS
 
   Factor<Operand * x> (. Operand * y = new Operand(0);  .) = 
    
-    Designator<x> (. if(x->kind != Operand::Func){code->load(x);} code->load(x); .) [ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr); code->put(CALL_S);*/ /*code->load(x); */  cout<<"call function: "<<x->obj->adr<<endl; .) ] 
+    Designator<x> (. if(x->kind != Operand::Func){code->load(x);} code->load(x); .) [ ActPars<x> (. FunctionCall(x);   cout<<"call function: "<<x->obj->adr<<endl; .) ] 
   
   | ident   (. string ident_name = coco_string_create_char(t->val); 
   			   Obj * obj = tab->find(ident_name);
@@ -947,12 +953,13 @@ PRODUCTIONS
           code->fixup(adr2); .)
         )
 
-  | "(" Expr<x> ")".
+  | "(" Expr<x> ")"  
+  .
 
   Designator <Operand * x> (. Operand * y = new Operand(0); string name, f_name,qua;  .)
    = ident (.  name = coco_string_create_char(t->val);
             qua = name;
-   			   Obj * obj = tab->find(name); 
+   			    Obj * obj = tab->find(name); 
             if(obj == SymbolTable::noObj){
              	string err = "no se encontro: "+name;
               SemErr(L"");
@@ -960,16 +967,16 @@ PRODUCTIONS
 		          errors->Exception(L"");
               //exit(1);
             }
-   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
-   			   *x = *new Operand(obj); 
-   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
-    				
+            cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
+            *x = *new Operand(obj); 
+            cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
+              
             if(obj->kind == Struct::Func){
               //x->kind == Operand::Func;
               //cout<<"----- operan to func"<<endl;
             }
-   			   .)
-
+   	  .)
+     
     {("." ident  (. if(x->type->kind == Struct::Class){
     					code->load(x);
 

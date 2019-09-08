@@ -3,7 +3,7 @@ package main
         int sumar(int a, int b){
             return a + b;
         }
-        void main(string[] args){
+        void main(){
             print(sumar(20,5));
         }
     }

@@ -21,7 +21,7 @@ follow:  ident class final llopen "fun"
 VarDecl
 first:   ident "fun" 
 follow:  ident class if while print return void final colon llopen llclose 
-         "fun" "mcode" 
+         "fun" "co" "mcode" 
 
 ClassDecl
 first:   class 
@@ -50,37 +50,37 @@ follow:  pclose
 Block
 first:   llopen 
 follow:  ident if else while print return void colon llopen llclose "fun" 
-         "native" "mcode" 
+         "native" "co" "mcode" 
 
 Statement
-first:   ident if while print return void colon llopen "mcode" 
-follow:  ident if else while print return void colon llopen llclose "fun" 
+first:   ident if while print return void colon llopen "co" "mcode" 
+follow:  ident if else while print return void colon llopen llclose "fun" "co" 
          "mcode" 
 
 Designator
 first:   ident 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "=" "fun" "==" 
-         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
-         "^" "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "=" "fun" "co" 
+         "==" "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" 
+         "|" "^" "<<" ">>" "mcode" 
 
 ActPars
 first:   popen 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 Expr
 first:   ident number stringConst floatLit new popen sinte "-" "!" 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 Mcode
 first:   "mcode" 
-follow:  ident if else while print return void colon llopen llclose "fun" 
+follow:  ident if else while print return void colon llopen llclose "fun" "co" 
          "mcode" 
 
 Relop
@@ -90,37 +90,37 @@ follow:  ident number stringConst floatLit new popen sinte "-" "!"
 LogicOr
 first:   ident number stringConst floatLit new popen sinte "-" "!" 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 LogicAnd
 first:   ident number stringConst floatLit new popen sinte "-" "!" 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 RelaExpr
 first:   ident number stringConst floatLit new popen sinte "-" "!" 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 AddSub
 first:   ident number stringConst floatLit new popen sinte "-" "!" 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 BitExpr
 first:   ident number stringConst floatLit new popen sinte 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 Addop
 first:   "-" "+" 
@@ -129,9 +129,9 @@ follow:  ident number stringConst floatLit new popen sinte
 BitShiftExpr
 first:   ident number stringConst floatLit new popen sinte 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 Bitop
 first:   "&" "|" "^" 
@@ -140,9 +140,9 @@ follow:  ident number stringConst floatLit new popen sinte
 Term
 first:   ident number stringConst floatLit new popen sinte 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 BitShiftop
 first:   "%" "<<" ">>" 
@@ -151,9 +151,9 @@ follow:  ident number stringConst floatLit new popen sinte
 Factor
 first:   ident number stringConst floatLit new popen sinte 
 follow:  ident number stringConst floatLit if else while print return void new 
-         comma colon llopen llclose bclose popen pclose sinte "fun" "==" "!=" 
-         ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" "^" 
-         "<<" ">>" "mcode" 
+         comma colon llopen llclose bclose popen pclose sinte "fun" "co" "==" 
+         "!=" ">" ">=" "<" "<=" "||" "&&" "-" "!" ":" "+" "*" "/" "%" "&" "|" 
+         "^" "<<" ">>" "mcode" 
 
 Mulop
 first:   "*" "/" "%" 

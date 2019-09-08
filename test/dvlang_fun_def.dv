@@ -79,7 +79,7 @@ class Stack{
     void sa(){
         println("void");
     }
-    int main(string[] args){
+    int main(){
 
        ga = 1;
        gb = 2;

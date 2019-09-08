@@ -2,7 +2,7 @@ package main
 
 @include "test/std.dv";
 
-class Usuario{
+class Usuario {
 
     string nombre;
     int anios;
@@ -11,15 +11,25 @@ class Usuario{
         return "Usuario@{nombre:"+this.nombre+",años:"+std_itos(this.anios)+"}";
     }
 
-    Usuario construct(string n,int a){
+    Usuario construct(string n, int a){
         this.nombre = n;
         this.anios = a;
         return this;
     }
 }
 
-{
-    void main(string[]args){
+{   
+    string nomber(int id){
+
+        return "Usuario "+id;
+
+    }
+    
+    void guardar(Usuario [] us,int index){
+        us[index] = new Usuario(nomber(index),index);
+    }
+
+    void main(){
         int cantidad,x;
         Usuario u;
         Usuario [] users;
@@ -27,12 +37,15 @@ class Usuario{
         cantidad = 10;
         users = new Usuario[cantidad];
 
+
+      /*  cantidad = 2000;
+        users = std_realloc(users,cantidad);*/
+
         x = 0;
-        while (x < (cantidad)) {
-            users[x] = new Usuario("Usuario "+std_itos(x),x);
+        while x < cantidad {
+            guardar(users,x);
             x = x + 1;
-        }
-      
+        }      
       
         x = cantidad-1;
         while x >= 0 {

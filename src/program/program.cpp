@@ -2,7 +2,7 @@
 #define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
 #endif
 #include "../process/strings_sets.h"
-#include "../proto/objFile.pb.h"
+//#include "../proto/objFile.pb.h"
 #include "program.h"
 
 #include <stdio.h>
@@ -387,7 +387,7 @@ void PROGRAM::writeProgramJson(
 
     #if !DEBUG
        Writer<FileWriteStream> w(os);// procution  
-    #endif
+    #endif 
     
     //
     d.Accept(w);

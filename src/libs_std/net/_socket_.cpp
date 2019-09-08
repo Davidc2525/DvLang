@@ -84,9 +84,9 @@ int _Socket_::_accept(int s_fd)
     listen(s_fd, 5);
 
     newsockfd = accept(s_fd, (struct sockaddr *)&cli_addr, &clilen);
-    if (newsockfd < 0)
+    /*if (newsockfd < 0)
         error("ERROR on accept");
-
+*/
     //sockets_con_fd.insert(make_pair(index_c, newsockfd));
     //index_c++;
 #if DEBUG

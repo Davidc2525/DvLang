@@ -5,23 +5,43 @@ package main
 
 {   
    
-    void main(string[]args){
-        Socket server;
-        Connection con;
+    void listen( Connection con){
+        println("listen: "+con.sock);
         Read data;
-
-
-        server = new Socket("orchi",2525);
-        println("server creado");
-        con = server.accept();
         int x;
         x = 0;
         while(1==1){
 
             data = con.read(100);
-            println("x: "+std_itos(x)+", "+data.data);
+            println("x: "+std_itos(con.sock)+", "+data.data);
             x=x+1;
         }   
+    }
+
+    void nc(){
+        Socket server;
+        Connection con;
+        
+
+
+        server = new Socket("orchi",2526);
+        println("server creado");
+        
+        int x;
+        x = 0;
+        while 1{
+            println(server.toString());
+            //con = server.accept();
+            co listen(server.accept());
+            
+            x=x+1;
+        }   
+    }
+    void main(){
+      co nc();
+      while 1{
+          std_sleep(10);
+      }
 
     }
 }

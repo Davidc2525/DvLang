@@ -12,7 +12,7 @@
 using namespace std;
 
 namespace PROCESS
-{
+{ 
 
 intdv * cache_ldcs = (intdv*) calloc(1000,sizeof(intdv));//crear una clase
 
@@ -36,12 +36,13 @@ Cpu::Cpu(int mainP, int sizeP, intdv *p, CpuArgs *args)
 	process = args->process;
 	program = p;
 	ip = main;
+	//cout <<"CPU["<<cpu_index<<"]: "<<"stack pointer: "<<stack_pointer<<endl;
 
 
 	#if DEBUG
-		cout << "CPU: main: " << main << endl;
-		cout << "CPU: sizep: " << sizeP << endl;
-		cout << "cpu index " << cpu_index << endl;
+		cout <<"CPU["<<cpu_index<<"]: "<< "CPU: main: " << main << endl;
+		cout <<"CPU["<<cpu_index<<"]: "<< "CPU: sizep: " << sizeP << endl;
+		cout <<"CPU["<<cpu_index<<"]: "<< "cpu index " << cpu_index << endl;
 		for (intdv x = 0; x < sizeP; x++)
 		{
 			cout << program[x] << " ";
@@ -93,7 +94,7 @@ void Cpu::eval(intdv instr)
 	switch (instr)
 	{
 	default:
-		cout << "INCORRECT OPCODE: "<< instr << endl;
+		cout <<"CPU["<<cpu_index<<"]: "<< "INCORRECT OPCODE: "<< instr << endl;
 		exit(1);
 		break;
 	case REALLOC:{
@@ -107,7 +108,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(newAdr);
 
 		#if DEBUG
-			cout << "REALLOC; from: "<<currSize<<", to adr: "<<adr<<", newSize: "<<newSize<<", newAdr: "<<newAdr << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "REALLOC; from: "<<currSize<<", to adr: "<<adr<<", newSize: "<<newSize<<", newAdr: "<<newAdr << endl;
 		#endif
 		break;
 	}
@@ -115,7 +116,7 @@ void Cpu::eval(intdv instr)
 		intdv adr = estack->Pop();
 		process->heap->Free(adr);
 		#if DEBUG
-			cout << "FREE; adr: "<<adr << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FREE; adr: "<<adr << endl;
 		#endif
 		break;
 	}
@@ -126,7 +127,7 @@ void Cpu::eval(intdv instr)
 		intdv adr = process->heap->Malloc(size);
 		estack->Push(adr);
 		#if DEBUG
-			cout << "Allocate with NEW memory: " <<size<< " slots, HP=" <<process->heap->heap_pointer << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "Allocate with NEW memory: " <<size<< " slots, HP=" <<process->heap->heap_pointer << endl;
 		#endif
 		break;
 	}
@@ -140,7 +141,7 @@ void Cpu::eval(intdv instr)
 		//estack->Push(val);
 
 		#if DEBUG
-			cout << "IPUTFIELD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"] val = "<<val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "IPUTFIELD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"] val = "<<val << endl;
 		#endif
 		break;
 	}
@@ -155,7 +156,7 @@ void Cpu::eval(intdv instr)
 
 
 		#if DEBUG
-			cout << "IGETFIELD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"], push("<<val<<")" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "IGETFIELD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"], push("<<val<<")" << endl;
 		#endif
 		break;
 	}
@@ -168,7 +169,7 @@ void Cpu::eval(intdv instr)
 		intdv adr = process->heap->Malloc(size);
 		estack->Push(adr);
 		#if DEBUG
-			cout << "Allocate memory: " <<size<< " slots, HP=" <<process->heap->heap_pointer << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "Allocate memory: " <<size<< " slots, HP=" <<process->heap->heap_pointer << endl;
 		#endif
 		break;
 	}
@@ -179,7 +180,8 @@ void Cpu::eval(intdv instr)
 
 		intdv a_len = process->heap->get(array_adr);
 		if(index>a_len-1){
-			cout << "ARRAY OVERFLOW: array length ["<<a_len<<"], index assign: "<<index<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ARRAY OVERFLOW: array length ["<<a_len<<"], index assign: "<<index<< endl;
+			//array_adr = process->heap->Realloc(array_adr,index);
 		}
 
 		process->heap->put(array_adr+1+index,val);
@@ -187,7 +189,7 @@ void Cpu::eval(intdv instr)
 		//estack->Push(val);
 
 		#if DEBUG
-			cout << "IASTORE: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"] val = "<<val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "IASTORE: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"] val = "<<val << endl;
 		#endif
 		break;
 	}
@@ -199,7 +201,7 @@ void Cpu::eval(intdv instr)
 
 		intdv a_len = process->heap->get(array_adr);
 		if(index>a_len-1){
-			cout << "ARRAY OVERFLOW: array length ["<<a_len<<"], index assign: "<<index<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ARRAY OVERFLOW: array length ["<<a_len<<"], index assign: "<<index<< endl;
 			estack->Push(0);
 
 		}else{
@@ -209,7 +211,7 @@ void Cpu::eval(intdv instr)
 
 
 		#if DEBUG
-			cout << "IALOAD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"], push("<<val<<")" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "IALOAD: adr = "<<array_adr<<" index = "<<index<<" heap["<< array_adr+1+index <<"], push("<<val<<")" << endl;
 		#endif
 		break;
 	}
@@ -219,7 +221,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(a_len);
 		#if DEBUG
-			cout << "ALEN: heap["<< array_adr <<"] = estack->Push() = "<< a_len<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ALEN: heap["<< array_adr <<"] = estack->Push() = "<< a_len<< endl;
 		#endif
 		break;
 	}
@@ -233,7 +235,7 @@ void Cpu::eval(intdv instr)
 
 			STRING_SET::Entry e = (*process->strings_set)[index];
 			#if DEBUG
-				cout << "LDCS allocate memory: " <<e.len<< " slots, str: "<<e.content<< endl;
+				cout <<"CPU["<<cpu_index<<"]: "<< "LDCS allocate memory: " <<e.len<< " slots, str: "<<e.content<< endl;
 			#endif
 
 			//tamaño de la cadena
@@ -248,7 +250,7 @@ void Cpu::eval(intdv instr)
 		}else{//in cache
 			adr = ref_in_cache;
 			#if DEBUG
-				cout << "LDCS Ref loaded from cache: "<<adr << endl;
+				cout <<"CPU["<<cpu_index<<"]: "<< "LDCS Ref loaded from cache: "<<adr << endl;
 			#endif
 		}
 
@@ -264,7 +266,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(v_p);
 
 		#if DEBUG
-			cout << "ICONST " << v_p << ", e stack pointer " << estack->getSp() << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ICONST " << v_p << ", e stack pointer " << estack->getSp() << endl;
 		#endif
 
 		break;
@@ -274,7 +276,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(adr);
 		#if DEBUG
-			cout << "ADR estack->Push(" << adr << ") " << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ADR estack->Push(" << adr << ") " << endl;
 		#endif
 		break;
 	}
@@ -283,7 +285,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(frame_pointer + adr);
 		#if DEBUG
-			cout << "ADRL estack->Push(" << frame_pointer + adr << ") " << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ADRL estack->Push(" << frame_pointer + adr << ") " << endl;
 		#endif
 		break;
 	}
@@ -296,7 +298,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(val);
 
 		#if DEBUG
-			cout << "ILOADL estack->Push(heap[" << frame_pointer + adr << "]) = " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ILOADL estack->Push(heap[" << frame_pointer + adr << "]) = " << val << endl;
 		#endif
 
 		break;
@@ -309,7 +311,7 @@ void Cpu::eval(intdv instr)
 		process->heap->put(frame_pointer + adr, val);
 
 		#if DEBUG
-			cout << "ISTOREL heap[" << frame_pointer + adr << "] =  " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ISTOREL heap[" << frame_pointer + adr << "] =  " << val << endl;
 		#endif
 
 		break;
@@ -322,7 +324,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(val);
 
 		#if DEBUG
-			cout << "ILOAD estack->Push(heap[" << adr << "]) = " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ILOAD estack->Push(heap[" << adr << "]) = " << val << endl;
 		#endif
 		break;
 	}
@@ -335,7 +337,7 @@ void Cpu::eval(intdv instr)
 		process->heap->put(adr, val);
 
 		#if DEBUG
-			cout << "ISTORE heap[" << adr << "] =  " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ISTORE heap[" << adr << "] =  " << val << endl;
 		#endif
 
 		break;
@@ -349,7 +351,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(val);
 
 		#if DEBUG
-			cout << "ILOAD_S estack->Push(heap[" << adr << "]) = " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ILOAD_S estack->Push(heap[" << adr << "]) = " << val << endl;
 		#endif
 		break;
 	}
@@ -362,7 +364,7 @@ void Cpu::eval(intdv instr)
 		process->heap->put(adr, val);
 
 		#if DEBUG
-			cout << "ISTORE_S heap[" << adr << "] =  " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ISTORE_S heap[" << adr << "] =  " << val << endl;
 		#endif
 
 		break;
@@ -378,7 +380,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(result);
 
 		#if DEBUG
-			cout << "ADD " << a << " + " << b << " push result " << result << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ADD " << a << " + " << b << " push result " << result << endl;
 		#endif
 		break;
 	}
@@ -392,7 +394,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(result);
 
 		#if DEBUG
-			cout << "SUB " << a << " - " << b << " push result " << result << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "SUB " << a << " - " << b << " push result " << result << endl;
 		#endif
 		break;
 	}
@@ -406,7 +408,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(result); 
 
 		#if DEBUG
-			cout << "MUL " << a << " * " << b << " push result " << result << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "MUL " << a << " * " << b << " push result " << result << endl;
 		#endif
 		break;
 	}
@@ -418,7 +420,7 @@ void Cpu::eval(intdv instr)
 		intdv a = estack->Pop();
 
 		if(a == 0 || b == 0){
-			cout << "No se puede dividir entre cero" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "No se puede dividir entre cero" << endl;
 
 			exit(1);
 			break;
@@ -429,7 +431,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(result);
 
 		#if DEBUG
-			cout << "DIV " << a << " / " << b << " push result " << result << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DIV " << a << " / " << b << " push result " << result << endl;
 		#endif
 		break;
 	} 
@@ -444,7 +446,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(result);
 
 		#if DEBUG 
-			cout << "MOD " << a << " % " << b << " push  result " << result << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "MOD " << a << " % " << b << " push  result " << result << endl;
 		#endif
 		break;
 	}
@@ -462,7 +464,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(new_val);
 
 		#if DEBUG
-			cout <<"INEG " << val << " to "<< new_val<<endl;
+			cout <<"CPU["<<cpu_index<<"]: "<<"INEG " << val << " to "<< new_val<<endl;
 		#endif
 		break;
 	}	
@@ -479,7 +481,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(new_val);
 
 		#if DEBUG
-			cout <<"INVERT " << val << " to "<< new_val<<endl;
+			cout <<"CPU["<<cpu_index<<"]: "<<"INVERT " << val << " to "<< new_val<<endl;
 		#endif
 		break;
 	}
@@ -498,7 +500,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DADD; "<< d_val_2<<" + "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DADD; "<< d_val_2<<" + "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -517,7 +519,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DSUB; "<< d_val_2<<" - "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DSUB; "<< d_val_2<<" - "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -536,7 +538,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DMUL; "<< d_val_2<<" * "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DMUL; "<< d_val_2<<" * "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -551,7 +553,7 @@ void Cpu::eval(intdv instr)
 		if(d_val_1 == 0 || d_val_2 == 0){
 			estack->Push(0);
 			#if DEBUG
-				cout << "Divicion entre 0 no permitido; push 0" << endl;
+				cout <<"CPU["<<cpu_index<<"]: "<< "Divicion entre 0 no permitido; push 0" << endl;
 			#endif
 			break;
 		}
@@ -563,7 +565,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DDIV; "<< d_val_2<<" / "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DDIV; "<< d_val_2<<" / "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -581,7 +583,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DMOD; "<< d_val_2<<" % "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DMOD; "<< d_val_2<<" % "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -604,7 +606,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "DNEG; -("<< d_val_1<<")  = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DNEG; -("<< d_val_1<<")  = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -624,7 +626,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FADD; "<< d_val_2<<" + "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FADD; "<< d_val_2<<" + "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -643,7 +645,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FSUB; "<< d_val_2<<" - "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FSUB; "<< d_val_2<<" - "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -662,7 +664,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FMUL; "<< d_val_2<<" * "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FMUL; "<< d_val_2<<" * "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -677,7 +679,7 @@ void Cpu::eval(intdv instr)
 		if(d_val_1 == 0 || d_val_2 == 0){
 			estack->Push(0);
 			#if DEBUG
-				cout << "Divicion entre 0 no permitido; push 0" << endl;
+				cout <<"CPU["<<cpu_index<<"]: "<< "Divicion entre 0 no permitido; push 0" << endl;
 			#endif
 			break;
 		}
@@ -689,7 +691,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FDIV; "<< d_val_2<<" / "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FDIV; "<< d_val_2<<" / "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -707,7 +709,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FMOD; "<< d_val_2<<" % "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FMOD; "<< d_val_2<<" % "<<d_val_1 <<" = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -730,7 +732,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(d_val);
 
 		#if DEBUG
-			cout << "FNEG; -("<< d_val_1<<")  = "<<result<<"; bit_val: "<<d_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FNEG; -("<< d_val_1<<")  = "<<result<<"; bit_val: "<<d_val << endl;
 		#endif
 		break;
 	}
@@ -744,7 +746,7 @@ void Cpu::eval(intdv instr)
 		cout << a <<endl;
 
 		#if DEBUG
-			cout << "IWRITE " << a << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "IWRITE " << a << endl;
 		#endif
 		break;
 	}
@@ -752,10 +754,10 @@ void Cpu::eval(intdv instr)
 	{
 
 		float a = NUMBERS::Numbers::ConverToFloat(estack->Pop());
-		cout << a <<endl;
+		cout<< a <<endl;
 
 		#if DEBUG
-			cout << "FWRITE " << a << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FWRITE " << a << endl;
 		#endif
 		break;
 	}
@@ -764,11 +766,11 @@ void Cpu::eval(intdv instr)
 	{
 
 		double a = NUMBERS::Numbers::ConverToDouble(estack->Pop());
-		//cout << a <<endl;
+		//cout <<"CPU["<<cpu_index<<"]: "<< a <<endl;
 		printf("%.31lf \n", a);
 
 		#if DEBUG
-			cout << "DWRITE " << a << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DWRITE " << a << endl;
 		#endif
 		break;
 	}
@@ -782,7 +784,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(bit_val);
 		#if DEBUG
-			cout << "FTOD; stack val: "<<s_v<<", float val: "<< val<<", double val: "<<d_val<<", bit_val: "<<bit_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FTOD; stack val: "<<s_v<<", float val: "<< val<<", double val: "<<d_val<<", bit_val: "<<bit_val << endl;
 		#endif
 		break;
 	}
@@ -794,7 +796,7 @@ void Cpu::eval(intdv instr)
 		int bit_val = NUMBERS::Numbers::FloatToBitInt(f_val);
 		estack->Push(bit_val);
 		#if DEBUG
-			cout << "DTOF; stack val: "<<s_v<<", double val: "<< val<<", float val: "<<f_val<<", bit_val: "<<bit_val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DTOF; stack val: "<<s_v<<", double val: "<< val<<", float val: "<<f_val<<", bit_val: "<<bit_val << endl;
 		#endif
 		break;
 	}
@@ -805,7 +807,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(i_val);
 		#if DEBUG
-			cout << "DTOI; stack val: "<<s_v<<", double val: "<< val<<", int val: "<<i_val<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DTOI; stack val: "<<s_v<<", double val: "<< val<<", int val: "<<i_val<< endl;
 		#endif
 		break;
 	}
@@ -816,7 +818,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(i_val);
 		#if DEBUG
-			cout << "FTOI; stack val: "<<s_v<<", float val: "<< val<<", int val: "<<i_val<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FTOI; stack val: "<<s_v<<", float val: "<< val<<", int val: "<<i_val<< endl;
 		#endif
 		break;
 	}
@@ -827,7 +829,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(bit_val);
 		#if DEBUG
-			cout << "ITOD; stack val: "<<val<<", bit val: "<< bit_val<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ITOD; stack val: "<<val<<", bit val: "<< bit_val<< endl;
 		#endif
 		break;
 	}
@@ -838,7 +840,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(bit_val);
 		#if DEBUG
-			cout << "ITOF; stack val: "<<val<<", bit val: "<< bit_val<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ITOF; stack val: "<<val<<", bit val: "<< bit_val<< endl;
 		#endif
 		break;
 	}
@@ -858,7 +860,7 @@ void Cpu::eval(intdv instr)
 					int index_char = adr+1+x;
 					char str_char = (int)str_val[x];
 					process->heap->put(index_char,(int)str_char);
-					cout << " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
+					cout <<"CPU["<<cpu_index<<"]: "<< " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
 				#else
 					process->heap->put(adr+1+x,(int)str_val[x]);
 				#endif
@@ -867,7 +869,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(adr);
 
 		#if DEBUG
-			cout << "DTOS; double_val: "<<val_do<<", str_val: '"<<chars_val<<"'" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DTOS; double_val: "<<val_do<<", str_val: '"<<chars_val<<"'" << endl;
 		#endif
 		break;
 	}
@@ -885,7 +887,7 @@ void Cpu::eval(intdv instr)
 					int index_char = adr+1+x;
 					char str_char = (int)str_val[x];
 					process->heap->put(index_char,(int)str_char);
-					cout << " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
+					cout <<"CPU["<<cpu_index<<"]: "<< " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
 				#else
 					process->heap->put(adr+1+x,(int)str_val[x]);
 				#endif
@@ -894,7 +896,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(adr);
 
 		#if DEBUG
-			cout << "FTOS; float_val: "<<val_flo<<", str_val: '"<<str_val<<"'" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "FTOS; float_val: "<<val_flo<<", str_val: '"<<str_val<<"'" << endl;
 		#endif
 		break;
 	}
@@ -903,7 +905,7 @@ void Cpu::eval(intdv instr)
 
 		string str_val = to_string(val_int);
 		#if DEBUG
-			cout << "ITOS; int_val: "<<val_int<<", str_val: '"<<str_val<<"'" << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ITOS; int_val: "<<val_int<<", str_val: '"<<str_val<<"'" << endl;
 		#endif
 		intdv adr = STRING::String::c_str_to_dv_srt(process->heap,str_val);
 		/*int heap_size = str_val.length();
@@ -915,7 +917,7 @@ void Cpu::eval(intdv instr)
 					int index_char = adr+1+x;
 					char str_char = (int)str_val[x];
 					process->heap->put(index_char,(int)str_char);
-					cout << " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
+					cout <<"CPU["<<cpu_index<<"]: "<< " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
 				#else
 					process->heap->put(adr+1+x,(int)str_val[x]);
 				#endif
@@ -952,7 +954,7 @@ void Cpu::eval(intdv instr)
 		intdv adr = STRING::String::c_str_to_dv_srt(process->heap,str_concat);
 
 		#if DEBUG
-			cout << "STRCAT; '"<<str_a<<"' + '"<<str_b<<"' = '" <<str_concat<<"', adr = "<<adr<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "STRCAT; '"<<str_a<<"' + '"<<str_b<<"' = '" <<str_concat<<"', adr = "<<adr<< endl;
 		#endif
 
 		/*for(int x = 0;x < new_len; x++){
@@ -960,7 +962,7 @@ void Cpu::eval(intdv instr)
 					int index_char = adr+1+x;
 					char str_char = (int)str_concat[x];
 					process->heap->put(index_char,(int)str_char);
-					cout << " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
+					cout <<"CPU["<<cpu_index<<"]: "<< " Put char heap["<<index_char<<"] = "<<str_char<< " -> " << (int)str_char << endl;
 				#else
 					process->heap->put(adr+1+x,(int)str_concat[x]);
 				#endif
@@ -984,7 +986,7 @@ void Cpu::eval(intdv instr)
 		}*/
 
 		/*for (intdv y = 0; y < len ; y++){
-		        cout<<c[y];
+		        cout<<"CPU["<<cpu_index<<"]: "<<c[y];
 		    }*/
 		/*intdv index = estack->Pop();
 		string c = process->strings_set->get(index).content;*/
@@ -998,9 +1000,9 @@ void Cpu::eval(intdv instr)
 		}
 
 		#if DEBUG
-			cout<<"CWRITE strings["<<adr<<"]; len: "<<len<<"; \""<<c<<"\""<<endl;
+			cout<<"CPU["<<cpu_index<<"]: "<<"CWRITE strings["<<adr<<"]; len: "<<len<<"; \""<<c<<"\""<<endl;
 		#else
-			cout << c;
+			cout<< c;
 		#endif
 		break;
 	}
@@ -1019,7 +1021,7 @@ void Cpu::eval(intdv instr)
 		
 
 		#if DEBUG
-			cout<< "CMP; flag[0] = "<<this->flag[0] << " flag[1] = "<<this->flag[1] << endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "CMP; flag[0] = "<<this->flag[0] << " flag[1] = "<<this->flag[1] << endl;
 		#endif
 
 		break;
@@ -1027,7 +1029,7 @@ void Cpu::eval(intdv instr)
 	case JMP: {		
 			ip = next();
 		#if DEBUG
-			cout<< "JMP;  jump to: "<<ip<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JMP;  jump to: "<<ip<< endl;
 		#endif
 		break;
 	}
@@ -1038,7 +1040,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JE; a == b "<<this->flag[0]<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JE; a == b "<<this->flag[0]<< endl;
 		#endif
 		break;
 	}
@@ -1049,7 +1051,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JNE; a != b "<<(this->flag[0]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JNE; a != b "<<(this->flag[0]==0)<< endl;
 		#endif
 		break;
 
@@ -1061,7 +1063,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JG; a > b "<<(this->flag[1]==1)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JG; a > b "<<(this->flag[1]==1)<< endl;
 		#endif
 		break;
 	}
@@ -1072,7 +1074,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JL; a < b "<<(this->flag[1]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JL; a < b "<<(this->flag[1]==0)<< endl;
 		#endif
 		break;	
 	}
@@ -1083,7 +1085,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JGE; a >= b "<<(this->flag[0]==1||this->flag[1]==1)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JGE; a >= b "<<(this->flag[0]==1||this->flag[1]==1)<< endl;
 		#endif
 		break;
 	}
@@ -1094,7 +1096,7 @@ void Cpu::eval(intdv instr)
 			ip = ip + 1;
 		}
 		#if DEBUG
-			cout<< "JLE; a <= b "<<(this->flag[0]==1||this->flag[1]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "JLE; a <= b "<<(this->flag[0]==1||this->flag[1]==0)<< endl;
 		#endif
 		break;
 	}
@@ -1105,7 +1107,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[0]==1);
 
 		#if DEBUG
-			cout<< "SETE; a == b "<<this->flag[0]<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETE; a == b "<<this->flag[0]<< endl;
 		#endif
 		break;
 	}
@@ -1114,7 +1116,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[0]==0);
 
 		#if DEBUG
-			cout<< "SETNE; a != b "<<(this->flag[0]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETNE; a != b "<<(this->flag[0]==0)<< endl;
 		#endif
 		break;
 
@@ -1124,7 +1126,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[1]==1);
 
 		#if DEBUG
-			cout<< "SETG; a > b "<<(this->flag[1]==1)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETG; a > b "<<(this->flag[1]==1)<< endl;
 		#endif
 		break;
 	}
@@ -1133,7 +1135,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[1]==0);
 
 		#if DEBUG
-			cout<< "SETL; a < b "<<(this->flag[1]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETL; a < b "<<(this->flag[1]==0)<< endl;
 		#endif
 		break;	
 	}
@@ -1142,7 +1144,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[0]==1||this->flag[1]==1);
 
 		#if DEBUG
-			cout<< "SETGE; a >= b "<<(this->flag[0]==1||this->flag[1]==1)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETGE; a >= b "<<(this->flag[0]==1||this->flag[1]==1)<< endl;
 		#endif
 		break;
 	}
@@ -1151,7 +1153,7 @@ void Cpu::eval(intdv instr)
 		this->estack->Push(this->flag[0]==1||this->flag[1]==0);
 
 		#if DEBUG
-			cout<< "SETLE; a <= b "<<(this->flag[0]==1||this->flag[1]==0)<< endl;
+			cout<<"CPU["<<cpu_index<<"]: "<< "SETLE; a <= b "<<(this->flag[0]==1||this->flag[1]==0)<< endl;
 		#endif
 		break;
 	}
@@ -1165,7 +1167,7 @@ void Cpu::eval(intdv instr)
 		estack->Push(a & b);
 
 		#if DEBUG
-			cout << "AND " << a << " && " << b << " " << (a & b == 1 ? "true" : "false") << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "AND " << a << " && " << b << " " << (a & b == 1 ? "true" : "false") << endl;
 		#endif
 		break;
 	}
@@ -1177,16 +1179,16 @@ void Cpu::eval(intdv instr)
 		estack->Push(a | b);
 
 		#if DEBUG
-			cout << "OR = " << a << " || " << b << " " << (a | b == 1 ? "true" : "false") << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "OR = " << a << " || " << b << " " << (a | b == 1 ? "true" : "false") << endl;
 		#endif
 		break;
-	}
+	} 
 	case NCALL:{ 
 		int native_id = estack->Pop();
 		
 		//llamadas a funciones nativas
 		#if DEBUG
-			cout << "llamando funcion nativa: "<< native_id << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "llamando funcion nativa: "<< native_id << endl;
 		#endif
 		Cpu * c = this;
 	    //intdv val = native->call_wrap2<intdv>(native_id,c);
@@ -1195,7 +1197,7 @@ void Cpu::eval(intdv instr)
 
 		estack->Push(val);
 		#if DEBUG
-			cout << "devolviendo el control al programa resultado: "<<val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "devolviendo el control al programa resultado: "<<val << endl;
 		#endif
 		break;
 	}
@@ -1211,9 +1213,8 @@ void Cpu::eval(intdv instr)
 
 		int n_pars = program[main+1];
 
-
 		PROCESS::Args *processArgs = new PROCESS::Args();
-		//process args
+		//process args 
 		processArgs->max_heap = process->get_default_args()->max_heap;
 		processArgs->max_e_stack = process->get_default_args()->max_e_stack;
 		processArgs->max_f_stack = process->get_default_args()->max_f_stack; // TODO delete
@@ -1222,6 +1223,10 @@ void Cpu::eval(intdv instr)
 		processArgs->main = main;
 		processArgs->sizeP = process->get_default_args()->sizeP;
 		processArgs->program = process->get_default_args()->program;
+		processArgs->entrys = process->get_default_args()->entrys;
+		processArgs->globals = process->get_default_args()->globals+stack_pointer;
+		processArgs->argc = process->get_default_args()->argc;
+		processArgs->argv = process->get_default_args()->argv;
 
 		int cpuid = process->fork(processArgs);
 		Cpu * cpu = process->get_cpu(cpuid);
@@ -1229,8 +1234,8 @@ void Cpu::eval(intdv instr)
 		intdv * params = new intdv[n_pars];
 
 		#if DEBUG
-			cout << "CO_CALL; new cpuid  "<< cpuid << "; n° params: "<<n_pars<<endl;
-			cout << " CO_CALL; transfer n° params: "<<n_pars<<""<<endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "CO_CALL; new cpuid  "<< cpuid << "; n° params: "<<n_pars<<endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< " CO_CALL; transfer n° params: "<<n_pars<<""<<endl;
 		#endif
 
 		for (int x =n_pars-1;x>=0;x--)
@@ -1246,12 +1251,12 @@ void Cpu::eval(intdv instr)
 			//process->heap->put(frame_pointer + i, val);
 			cpu->get_e_stack()->Push(val);
 			#if DEBUG
-			cout << " CO_CALL; push param: "<<val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< " CO_CALL; push param: "<<val << endl;
 			#endif
 		}
 		delete[] params;
 		process->init_cpu(cpuid);
-		break;
+		break; 
 	}
 	case CALL://deprecated; see CALL_S
 	{
@@ -1261,7 +1266,7 @@ void Cpu::eval(intdv instr)
 
 
 		#if DEBUG
-			cout << "CALL " << n_ip << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "CALL " << n_ip << endl;
 		#endif
 
 
@@ -1276,12 +1281,12 @@ void Cpu::eval(intdv instr)
 	{
 
 		frame_stack->Push(ip);
-		//cout<<"CALL: "<<ip<<endl;
+		//cout<<"CPU["<<cpu_index<<"]: "<<"CALL: "<<ip<<endl;
 		intdv n_ip = estack->Pop();
 
 
 		#if DEBUG
-			cout << "CALL_S new ip from stack " << n_ip << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "CALL_S new ip from stack " << n_ip << endl;
 		#endif
 
 
@@ -1295,24 +1300,24 @@ void Cpu::eval(intdv instr)
 		intdv nPars = next();
 		intdv nVars = next();
 		#if DEBUG
-			cout << "ENTER "<<ip<<" " << nPars <<" PARAMS"<<" VARS: "<<nVars<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "ENTER "<<ip<<" " << nPars <<" PARAMS"<<" VARS: "<<nVars<< endl;
 		#endif
 
 		intdv current_frame = frame_pointer;
 		frame_stack->Push(frame_pointer);
 		frame_pointer = stack_pointer;
 		stack_pointer = stack_pointer +  nVars;
-
+ 
 		#if DEBUG 
-			cout << "cfp: "<<current_frame<<" nfp: "<<frame_pointer << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "cfp: "<<current_frame<<" nfp: "<<frame_pointer << endl;
 		#endif
-
+ 
 		for (intdv i = nPars - 1; i >= 0; i--)
 		{
 			intdv val = estack->Pop();
 			process->heap->put(frame_pointer + i, val);
 			#if DEBUG
-			cout << " ENTER; SAVE PARAM: heap[" << (frame_pointer + i) << "]  =  estack->Pop() = " << val << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< " ENTER; SAVE PARAM: heap[" << (frame_pointer + i) << "]  =  estack->Pop() = " << val << endl;
 			#endif
 		}
 
@@ -1323,13 +1328,13 @@ void Cpu::eval(intdv instr)
 	case EXIT:{
 		//TODO
 		#if DEBUG
-			//cout << "EXITING " << endl;
+			//cout <<"CPU["<<cpu_index<<"]: "<< "EXITING " << endl;
 		#endif
 		stack_pointer = frame_pointer;
 		frame_pointer = frame_stack->Pop();
-		//cout << "EXIT; " << frame_pointer << endl;
+		//cout <<"CPU["<<cpu_index<<"]: "<< "EXIT; " << frame_pointer << endl;
 		#if DEBUG
-			cout << "EXIT; c fp: "<<stack_pointer<<" n fp " << frame_pointer << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "EXIT; c fp: "<<stack_pointer<<" n fp " << frame_pointer << endl;
 		#endif
 		break;
 	}
@@ -1339,10 +1344,16 @@ void Cpu::eval(intdv instr)
 		intdv p_ip = frame_stack->Pop();
 		if(p_ip != -1){
 			#if DEBUG
-				cout <<"RET ip "<< ip << endl;
+				cout <<"CPU["<<cpu_index<<"]: "<<"RET ip "<< ip << endl;
 			#endif
 			ip = p_ip;
+		}else{
+			if(cpu_index!=0){
+				running = false;
+			}
 		}
+
+		
 		  
 		break;
 	}
@@ -1351,14 +1362,14 @@ void Cpu::eval(intdv instr)
 		estack->Push(val);
 		estack->Push(val);
 		#if DEBUG
-			cout << "DUP estack->pop() = "<<val<<"; estack->push("<<val<<"), estack->push("<<val<<")"  << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "DUP estack->pop() = "<<val<<"; estack->push("<<val<<"), estack->push("<<val<<")"  << endl;
 		#endif
 		break;
 	}
 	case POP:{
 
 		#if DEBUG
-			cout << "POP; "<<estack->Pop()<< endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "POP; "<<estack->Pop()<< endl;
 		#else
 			estack->Pop();
 		#endif
@@ -1368,7 +1379,7 @@ void Cpu::eval(intdv instr)
 	case HLT:
 		running = false;
 		#if DEBUG
-			cout << "HLT " << endl;
+			cout <<"CPU["<<cpu_index<<"]: "<< "HLT " << endl;
 		#endif
 		break;
 	}

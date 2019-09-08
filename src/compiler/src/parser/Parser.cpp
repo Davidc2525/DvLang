@@ -69,7 +69,7 @@ void Parser::Program() {
 		if (StartOf(1)) {
 			LoadExp();
 		}
-		if (la->kind == 70 /* "@>l" */ || la->kind == 71 /* "@load_lib" */) {
+		if (la->kind == 71 /* "@>l" */ || la->kind == 72 /* "@load_lib" */) {
 			LibLoad();
 		}
 		
@@ -95,17 +95,17 @@ void Parser::Program() {
 }
 
 void Parser::LoadExp() {
-		while (la->kind == 68 /* "@>" */ || la->kind == 69 /* "@include" */) {
+		while (la->kind == 69 /* "@>" */ || la->kind == 70 /* "@include" */) {
 			Load();
 		}
 }
 
 void Parser::LibLoad() {
-		if (la->kind == 70 /* "@>l" */) {
+		if (la->kind == 71 /* "@>l" */) {
 			Get();
-		} else if (la->kind == 71 /* "@load_lib" */) {
+		} else if (la->kind == 72 /* "@load_lib" */) {
 			Get();
-		} else SynErr(73);
+		} else SynErr(74);
 		Expect(_stringConst);
 		if(lib_info->load_any){
 		 SemErr(L"No se puede cargar mas de una libreria por archivo.");
@@ -128,7 +128,7 @@ void Parser::ConstDecl() {
 			Get();
 		} else if (la->kind == _stringConst) {
 			Get();
-		} else SynErr(74);
+		} else SynErr(75);
 		Expect(_colon);
 }
 
@@ -167,7 +167,7 @@ void Parser::ClassDecl() {
 		Expect(_llopen);
 		tab->openScope(); cout<<"class decl: "<<class_name<<" scope opener: "<<tab->curLevel<<endl; 
 		while (la->kind == _ident || la->kind == _void || la->kind == 28 /* "fun" */) {
-			vd = (Obj*)malloc(sizeof(Obj)); 
+			vd = new Obj(); 
 			if (followedByColon()) {
 				VarDecl(vd);
 				clazz->type->nFields++;
@@ -191,7 +191,7 @@ void Parser::FuncDecl() {
 		} else if (la->kind == _void) {
 			Get();
 			type = tab->noType; 
-		} else SynErr(75);
+		} else SynErr(76);
 		Expect(_ident);
 		name_method = string(coco_string_create_char(t->val));
 		curMethod = tab->insert(Obj::Func,name_method,type); 
@@ -240,7 +240,7 @@ void Parser::NativeDecl() {
 		} else if (la->kind == _void) {
 			Get();
 			_type = tab->noType; 
-		} else SynErr(76);
+		} else SynErr(77);
 		Expect(_ident);
 		string symbol_name = string(coco_string_create_char(t->val));
 		native = tab->insert(Obj::Func, symbol_name, _type);
@@ -316,7 +316,7 @@ void Parser::MethodDecl(Obj * clazz ) {
 		} else if (la->kind == _void) {
 			Get();
 			type = tab->noType; 
-		} else SynErr(77);
+		} else SynErr(78);
 		Expect(_ident);
 		name_method = string(coco_string_create_char(t->val));
 		
@@ -402,13 +402,17 @@ void Parser::Block() {
 }
 
 void Parser::Statement() {
-		Operand * x = new Operand(0); Operand * y = new Operand(0); 
+		int co_call =0; Operand * x = new Operand(0); Operand * y = new Operand(0); 
 		switch (la->kind) {
-		case _ident: {
+		case _ident: case 30 /* "co" */: {
+			if (la->kind == 30 /* "co" */) {
+				Get();
+				co_call = 1; 
+			}
 			Designator(x);
 			if (la->kind == _popen) {
 				ActPars(x);
-				FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr);code->put(CALL_S);*/ /*code->load(x); */  cout<<"call procedure: "<<x->obj->name<<" : "<<x->obj->adr<<endl; 
+				x->co_call = co_call; FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr);code->put(CALL_S);*/ /*code->load(x); */  cout<<"call procedure: "<<x->obj->name<<" : "<<x->obj->adr<<endl; 
 				if (x->obj->type != tab->noType){
 				    cout<<"-------------- CALL PROCEDURE POPING"<<endl;
 				    code->put(POP);
@@ -462,7 +466,7 @@ void Parser::Statement() {
 				
 				}
 				
-			} else SynErr(78);
+			} else SynErr(79);
 			Expect(_colon);
 			break;
 		}
@@ -492,7 +496,7 @@ void Parser::Statement() {
 				code->fixup(adr2); 
 			} else if (StartOf(5)) {
 				code->fixup(adr); 
-			} else SynErr(79);
+			} else SynErr(80);
 			break;
 		}
 		case _while: {
@@ -530,12 +534,12 @@ void Parser::Statement() {
 				cout<<"return value expected"<<endl;
 				
 				}
-			} else SynErr(80);
+			} else SynErr(81);
 			code->put(EXIT); code->put(RET); 
 			Expect(_colon);
 			break;
 		}
-		case 51 /* "mcode" */: {
+		case 52 /* "mcode" */: {
 			Mcode();
 			break;
 		}
@@ -585,7 +589,7 @@ void Parser::Statement() {
 			Get();
 			break;
 		}
-		default: SynErr(81); break;
+		default: SynErr(82); break;
 		}
 }
 
@@ -611,8 +615,8 @@ void Parser::Designator(Operand * x) {
 		//cout<<"----- operan to func"<<endl;
 		}
 		
-		while (la->kind == _bopen || la->kind == 41 /* "." */) {
-			if (la->kind == 41 /* "." */) {
+		while (la->kind == _bopen || la->kind == 42 /* "." */) {
+			if (la->kind == 42 /* "." */) {
 				Get();
 				Expect(_ident);
 				if(x->type->kind == Struct::Class){
@@ -736,52 +740,52 @@ void Parser::Expr(Operand * x) {
 }
 
 void Parser::Mcode() {
-		Expect(51 /* "mcode" */);
-		Expect(52 /* "begin" */);
+		Expect(52 /* "mcode" */);
+		Expect(53 /* "begin" */);
 		ASM();
-		Expect(53 /* "end" */);
+		Expect(54 /* "end" */);
 }
 
 void Parser::Relop(int & op, int & s) {
 		switch (la->kind) {
-		case 30 /* "==" */: {
+		case 31 /* "==" */: {
 			Get();
 			op=18; 
 			break;
 		}
-		case 31 /* "!=" */: {
+		case 32 /* "!=" */: {
 			Get();
 			op=JE ; s = 0; 
 			break;
 		}
-		case 32 /* ">" */: {
+		case 33 /* ">" */: {
 			Get();
 			op=JLE; s = 0; 
 			break;
 		}
-		case 33 /* ">=" */: {
+		case 34 /* ">=" */: {
 			Get();
 			op=JLE; s = 1; 
 			break;
 		}
-		case 34 /* "<" */: {
+		case 35 /* "<" */: {
 			Get();
 			op=JGE; s = 0; 
 			break;
 		}
-		case 35 /* "<=" */: {
+		case 36 /* "<=" */: {
 			Get();
 			op=JG ; s = 0; 
 			break;
 		}
-		default: SynErr(82); break;
+		default: SynErr(83); break;
 		}
 }
 
 void Parser::LogicOr(Operand * x) {
 		Operand *y = new Operand(0); 
 		LogicAnd(x);
-		while (la->kind == 36 /* "||" */) {
+		while (la->kind == 37 /* "||" */) {
 			Get();
 			LogicAnd(x);
 		}
@@ -790,7 +794,7 @@ void Parser::LogicOr(Operand * x) {
 void Parser::LogicAnd(Operand * x) {
 		Operand *y = new Operand(0); 
 		RelaExpr(x);
-		while (la->kind == 37 /* "&&" */) {
+		while (la->kind == 38 /* "&&" */) {
 			Get();
 			RelaExpr(y);
 		}
@@ -812,8 +816,8 @@ void Parser::RelaExpr(Operand * x) {
 
 void Parser::AddSub(Operand * x) {
 		Operand *y = new Operand(0);  int op = 0; int sub = 0; int invert = 0; 
-		if (la->kind == 38 /* "-" */ || la->kind == 39 /* "!" */) {
-			if (la->kind == 38 /* "-" */) {
+		if (la->kind == 39 /* "-" */ || la->kind == 40 /* "!" */) {
+			if (la->kind == 39 /* "-" */) {
 				Get();
 				sub = 1; 
 			} else {
@@ -830,7 +834,7 @@ void Parser::AddSub(Operand * x) {
 		   code->load(x);
 		   code->put(INVERT);
 		} 
-		while (la->kind == 38 /* "-" */ || la->kind == 42 /* "+" */) {
+		while (la->kind == 39 /* "-" */ || la->kind == 43 /* "+" */) {
 			Addop(op);
 			BitExpr(y);
 			cout<<"-------------------- be string x "<<x->type->kind<<endl;
@@ -949,7 +953,7 @@ void Parser::AddSub(Operand * x) {
 			      code->put(ITOF);
 			      y->type =SymbolTable::floatType;
 			  }
-			  
+			
 			  switch(op){
 			    case ADD:{
 			      code->put(FADD);
@@ -992,7 +996,7 @@ void Parser::AddSub(Operand * x) {
 void Parser::BitExpr(Operand * x) {
 		Operand *y = new Operand(0);  int op = 0; 
 		BitShiftExpr(x);
-		while (la->kind == 46 /* "&" */ || la->kind == 47 /* "|" */ || la->kind == 48 /* "^" */) {
+		while (la->kind == 47 /* "&" */ || la->kind == 48 /* "|" */ || la->kind == 49 /* "^" */) {
 			Bitop(op);
 			BitShiftExpr(y);
 			code->load(x);
@@ -1004,19 +1008,19 @@ void Parser::BitExpr(Operand * x) {
 }
 
 void Parser::Addop(int & op) {
-		if (la->kind == 42 /* "+" */) {
+		if (la->kind == 43 /* "+" */) {
 			Get();
 			op = 1; 
-		} else if (la->kind == 38 /* "-" */) {
+		} else if (la->kind == 39 /* "-" */) {
 			Get();
 			op = 2; 
-		} else SynErr(83);
+		} else SynErr(84);
 }
 
 void Parser::BitShiftExpr(Operand * x) {
 		Operand *y = new Operand(0);  int op = 0; 
 		Term(x);
-		while (la->kind == 45 /* "%" */ || la->kind == 49 /* "<<" */ || la->kind == 50 /* ">>" */) {
+		while (la->kind == 46 /* "%" */ || la->kind == 50 /* "<<" */ || la->kind == 51 /* ">>" */) {
 			BitShiftop(op);
 			Term(y);
 			code->load(x);
@@ -1028,22 +1032,22 @@ void Parser::BitShiftExpr(Operand * x) {
 }
 
 void Parser::Bitop(int & op) {
-		if (la->kind == 46 /* "&" */) {
+		if (la->kind == 47 /* "&" */) {
 			Get();
 			op = 3; 
-		} else if (la->kind == 47 /* "|" */) {
+		} else if (la->kind == 48 /* "|" */) {
 			Get();
 			op = 4; 
-		} else if (la->kind == 48 /* "^" */) {
+		} else if (la->kind == 49 /* "^" */) {
 			Get();
 			op = 5; 
-		} else SynErr(84);
+		} else SynErr(85);
 }
 
 void Parser::Term(Operand * x) {
 		Operand *y = new Operand(0);  int op = 0; 
 		Factor(x);
-		while (la->kind == 43 /* "*" */ || la->kind == 44 /* "/" */ || la->kind == 45 /* "%" */) {
+		while (la->kind == 44 /* "*" */ || la->kind == 45 /* "/" */ || la->kind == 46 /* "%" */) {
 			Mulop(op);
 			Factor(y);
 			code->load(x);
@@ -1055,16 +1059,16 @@ void Parser::Term(Operand * x) {
 }
 
 void Parser::BitShiftop(int & op) {
-		if (la->kind == 49 /* "<<" */) {
+		if (la->kind == 50 /* "<<" */) {
 			Get();
 			op = 3; 
-		} else if (la->kind == 50 /* ">>" */) {
+		} else if (la->kind == 51 /* ">>" */) {
 			Get();
 			op = 4; 
-		} else if (la->kind == 45 /* "%" */) {
+		} else if (la->kind == 46 /* "%" */) {
 			Get();
 			op = 5; 
-		} else SynErr(85);
+		} else SynErr(86);
 }
 
 void Parser::Factor(Operand * x) {
@@ -1074,7 +1078,7 @@ void Parser::Factor(Operand * x) {
 			if(x->kind != Operand::Func){code->load(x);} code->load(x); 
 			if (la->kind == _popen) {
 				ActPars(x);
-				FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr); code->put(CALL_S);*/ /*code->load(x); */  cout<<"call function: "<<x->obj->adr<<endl; 
+				FunctionCall(x);   cout<<"call function: "<<x->obj->adr<<endl; 
 			}
 		} else if (la->kind == _ident) {
 			Get();
@@ -1189,7 +1193,7 @@ void Parser::Factor(Operand * x) {
 			x->relaExprSub = tmp->relaExprSub;
 			x->relaExprOp = tmp->relaExprOp;
 			code->load(x);
-			Expect(40 /* ":" */);
+			Expect(41 /* ":" */);
 			code->put(JMP); code->put(0);  
 			adr2 = CodeGenerator::pc-1; 
 			code->fixup(adr);
@@ -1205,20 +1209,20 @@ void Parser::Factor(Operand * x) {
 			Get();
 			Expr(x);
 			Expect(_pclose);
-		} else SynErr(86);
+		} else SynErr(87);
 }
 
 void Parser::Mulop(int & op) {
-		if (la->kind == 43 /* "*" */) {
+		if (la->kind == 44 /* "*" */) {
 			Get();
 			op = 3; 
-		} else if (la->kind == 44 /* "/" */) {
+		} else if (la->kind == 45 /* "/" */) {
 			Get();
 			op = 4; 
-		} else if (la->kind == 45 /* "%" */) {
+		} else if (la->kind == 46 /* "%" */) {
 			Get();
 			op = 5; 
-		} else SynErr(87);
+		} else SynErr(88);
 }
 
 void Parser::ASM() {
@@ -1237,7 +1241,7 @@ void Parser::McodeStatement() {
 			Executable();
 		} else if (StartOf(10)) {
 			Directive(addres);
-		} else SynErr(88);
+		} else SynErr(89);
 }
 
 void Parser::Executable() {
@@ -1260,25 +1264,25 @@ void Parser::Executable() {
 void Parser::Directive(int & addres) {
 		if (la->kind == _ident) {
 			Label();
-			Expect(63 /* "EQU" */);
+			Expect(64 /* "EQU" */);
 			KnownAddress(addres);
-		} else if (la->kind == _ident || la->kind == 64 /* "DC" */ || la->kind == 65 /* "DS" */) {
+		} else if (la->kind == _ident || la->kind == 65 /* "DC" */ || la->kind == 66 /* "DS" */) {
 			if (la->kind == _ident) {
 				Label();
 			}
-			if (la->kind == 64 /* "DC" */) {
+			if (la->kind == 65 /* "DC" */) {
 				Get();
 				Address(addres);
-			} else if (la->kind == 65 /* "DS" */) {
+			} else if (la->kind == 66 /* "DS" */) {
 				Get();
 				KnownAddress(addres);
-			} else SynErr(89);
-		} else if (la->kind == 66 /* "ORG" */) {
+			} else SynErr(90);
+		} else if (la->kind == 67 /* "ORG" */) {
 			Get();
 			KnownAddress(addres);
-		} else if (la->kind == 67 /* "BEG" */) {
+		} else if (la->kind == 68 /* "BEG" */) {
 			Get();
-		} else SynErr(90);
+		} else SynErr(91);
 }
 
 void Parser::Label() {
@@ -1286,35 +1290,35 @@ void Parser::Label() {
 }
 
 void Parser::OneByteOp(int & op) {
-		if (la->kind == 54 /* "ADD" */) {
+		if (la->kind == 55 /* "ADD" */) {
 			Get();
 			op = ADD; 
-		} else if (la->kind == 55 /* "PSH" */) {
+		} else if (la->kind == 56 /* "PSH" */) {
 			Get();
-		} else if (la->kind == 56 /* "POP" */) {
+		} else if (la->kind == 57 /* "POP" */) {
 			Get();
-		} else if (la->kind == 57 /* "CALL" */) {
+		} else if (la->kind == 58 /* "CALL" */) {
 			Get();
 			op = CALL_S; 
-		} else if (la->kind == 58 /* "ALEN" */) {
+		} else if (la->kind == 59 /* "ALEN" */) {
 			Get();
 			op=ALEN; 
-		} else SynErr(91);
+		} else SynErr(92);
 }
 
 void Parser::TwoByteOp(int & op) {
-		if (la->kind == 59 /* "LDA" */) {
+		if (la->kind == 60 /* "LDA" */) {
 			Get();
 			op = ILOADL; 
-		} else if (la->kind == 60 /* "STORE" */) {
+		} else if (la->kind == 61 /* "STORE" */) {
 			Get();
 			op = ISTOREL; 
-		} else if (la->kind == 61 /* "GOTO" */) {
+		} else if (la->kind == 62 /* "GOTO" */) {
 			Get();
-		} else if (la->kind == 62 /* "ICONST" */) {
+		} else if (la->kind == 63 /* "ICONST" */) {
 			Get();
 			op = ICONST; 
-		} else SynErr(92);
+		} else SynErr(93);
 }
 
 void Parser::Address(int & addres) {
@@ -1325,7 +1329,7 @@ void Parser::Address(int & addres) {
 			string str_val = coco_string_create_char(t->val);
 			addres = stoi(str_val);
 			
-		} else SynErr(93);
+		} else SynErr(94);
 }
 
 void Parser::KnownAddress(int & addres) {
@@ -1333,11 +1337,11 @@ void Parser::KnownAddress(int & addres) {
 }
 
 void Parser::Load() {
-		if (la->kind == 68 /* "@>" */) {
+		if (la->kind == 69 /* "@>" */) {
 			Get();
-		} else if (la->kind == 69 /* "@include" */) {
+		} else if (la->kind == 70 /* "@include" */) {
 			Get();
-		} else SynErr(94);
+		} else SynErr(95);
 		Expect(_stringConst);
 		string i_file(coco_string_create_char(t->val)); cout<<"include: "<<i_file<<endl; 
 		((type_f) _p)(onlyContent(i_file)); 
@@ -1445,7 +1449,7 @@ void Parser::Parse() {
 }
 
 Parser::Parser(Scanner *scanner) {
-	maxT = 72;
+	maxT = 73;
 
 	ParserInitCaller<Parser>::CallInit(this);
 	dummyToken = NULL;
@@ -1460,20 +1464,20 @@ bool Parser::StartOf(int s) {
 	const bool T = true;
 	const bool x = false;
 
-	static bool set[13][74] = {
-		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,x,x, x,x,T,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, x,x},
-		{x,T,x,x, x,x,T,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,T, x,T,T,T, T,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,T, T,T,T,T, T,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,T,x, T,T,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, T,T,T,x, T,T,T,T, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,T,T,T, T,T,T,x, T,T,T,T, x,x,x,x, x,x},
-		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,T,T, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, T,T,T,x, x,x,x,x, x,x,x,x, x,x},
-		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x}
+	static bool set[13][75] = {
+		{T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,x,x, x,x,T,x, x,x,x,x, x,T,x,x, x,x,T,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x},
+		{x,T,x,x, x,x,T,x, x,x,x,x, x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,T, x,T,T,T, T,x,x,x, x,T,T,x, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,T, T,T,T,T, T,x,x,x, x,T,T,T, x,x,x,x, x,x,x,x, T,x,T,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,T,x, T,T,x,x, x,x,x,x, x,x,T,x, x,x,x,x, x,x,T,x, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,T,T,T, T,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,T,T,T, T,T,T,T, x,T,T,T, T,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,T,T, T,T,T,T, T,T,T,T, x,T,T,T, T,x,x,x, x,x,x},
+		{x,T,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,T,T,T, T,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,T,T,T, T,T,T,T, x,x,x,x, x,x,x,x, x,x,x},
+		{x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x,T, T,T,T,T, x,x,x,x, x,x,x,x, x,x,x,x, x,x,x}
 	};
 
 
@@ -1566,71 +1570,72 @@ void Errors::SynErr(int line, int col, int n) {
 			case 27: s = coco_string_create(L"\"=\" expected"); break;
 			case 28: s = coco_string_create(L"\"fun\" expected"); break;
 			case 29: s = coco_string_create(L"\"native\" expected"); break;
-			case 30: s = coco_string_create(L"\"==\" expected"); break;
-			case 31: s = coco_string_create(L"\"!=\" expected"); break;
-			case 32: s = coco_string_create(L"\">\" expected"); break;
-			case 33: s = coco_string_create(L"\">=\" expected"); break;
-			case 34: s = coco_string_create(L"\"<\" expected"); break;
-			case 35: s = coco_string_create(L"\"<=\" expected"); break;
-			case 36: s = coco_string_create(L"\"||\" expected"); break;
-			case 37: s = coco_string_create(L"\"&&\" expected"); break;
-			case 38: s = coco_string_create(L"\"-\" expected"); break;
-			case 39: s = coco_string_create(L"\"!\" expected"); break;
-			case 40: s = coco_string_create(L"\":\" expected"); break;
-			case 41: s = coco_string_create(L"\".\" expected"); break;
-			case 42: s = coco_string_create(L"\"+\" expected"); break;
-			case 43: s = coco_string_create(L"\"*\" expected"); break;
-			case 44: s = coco_string_create(L"\"/\" expected"); break;
-			case 45: s = coco_string_create(L"\"%\" expected"); break;
-			case 46: s = coco_string_create(L"\"&\" expected"); break;
-			case 47: s = coco_string_create(L"\"|\" expected"); break;
-			case 48: s = coco_string_create(L"\"^\" expected"); break;
-			case 49: s = coco_string_create(L"\"<<\" expected"); break;
-			case 50: s = coco_string_create(L"\">>\" expected"); break;
-			case 51: s = coco_string_create(L"\"mcode\" expected"); break;
-			case 52: s = coco_string_create(L"\"begin\" expected"); break;
-			case 53: s = coco_string_create(L"\"end\" expected"); break;
-			case 54: s = coco_string_create(L"\"ADD\" expected"); break;
-			case 55: s = coco_string_create(L"\"PSH\" expected"); break;
-			case 56: s = coco_string_create(L"\"POP\" expected"); break;
-			case 57: s = coco_string_create(L"\"CALL\" expected"); break;
-			case 58: s = coco_string_create(L"\"ALEN\" expected"); break;
-			case 59: s = coco_string_create(L"\"LDA\" expected"); break;
-			case 60: s = coco_string_create(L"\"STORE\" expected"); break;
-			case 61: s = coco_string_create(L"\"GOTO\" expected"); break;
-			case 62: s = coco_string_create(L"\"ICONST\" expected"); break;
-			case 63: s = coco_string_create(L"\"EQU\" expected"); break;
-			case 64: s = coco_string_create(L"\"DC\" expected"); break;
-			case 65: s = coco_string_create(L"\"DS\" expected"); break;
-			case 66: s = coco_string_create(L"\"ORG\" expected"); break;
-			case 67: s = coco_string_create(L"\"BEG\" expected"); break;
-			case 68: s = coco_string_create(L"\"@>\" expected"); break;
-			case 69: s = coco_string_create(L"\"@include\" expected"); break;
-			case 70: s = coco_string_create(L"\"@>l\" expected"); break;
-			case 71: s = coco_string_create(L"\"@load_lib\" expected"); break;
-			case 72: s = coco_string_create(L"??? expected"); break;
-			case 73: s = coco_string_create(L"invalid LibLoad"); break;
-			case 74: s = coco_string_create(L"invalid ConstDecl"); break;
-			case 75: s = coco_string_create(L"invalid FuncDecl"); break;
-			case 76: s = coco_string_create(L"invalid NativeDecl"); break;
-			case 77: s = coco_string_create(L"invalid MethodDecl"); break;
-			case 78: s = coco_string_create(L"invalid Statement"); break;
+			case 30: s = coco_string_create(L"\"co\" expected"); break;
+			case 31: s = coco_string_create(L"\"==\" expected"); break;
+			case 32: s = coco_string_create(L"\"!=\" expected"); break;
+			case 33: s = coco_string_create(L"\">\" expected"); break;
+			case 34: s = coco_string_create(L"\">=\" expected"); break;
+			case 35: s = coco_string_create(L"\"<\" expected"); break;
+			case 36: s = coco_string_create(L"\"<=\" expected"); break;
+			case 37: s = coco_string_create(L"\"||\" expected"); break;
+			case 38: s = coco_string_create(L"\"&&\" expected"); break;
+			case 39: s = coco_string_create(L"\"-\" expected"); break;
+			case 40: s = coco_string_create(L"\"!\" expected"); break;
+			case 41: s = coco_string_create(L"\":\" expected"); break;
+			case 42: s = coco_string_create(L"\".\" expected"); break;
+			case 43: s = coco_string_create(L"\"+\" expected"); break;
+			case 44: s = coco_string_create(L"\"*\" expected"); break;
+			case 45: s = coco_string_create(L"\"/\" expected"); break;
+			case 46: s = coco_string_create(L"\"%\" expected"); break;
+			case 47: s = coco_string_create(L"\"&\" expected"); break;
+			case 48: s = coco_string_create(L"\"|\" expected"); break;
+			case 49: s = coco_string_create(L"\"^\" expected"); break;
+			case 50: s = coco_string_create(L"\"<<\" expected"); break;
+			case 51: s = coco_string_create(L"\">>\" expected"); break;
+			case 52: s = coco_string_create(L"\"mcode\" expected"); break;
+			case 53: s = coco_string_create(L"\"begin\" expected"); break;
+			case 54: s = coco_string_create(L"\"end\" expected"); break;
+			case 55: s = coco_string_create(L"\"ADD\" expected"); break;
+			case 56: s = coco_string_create(L"\"PSH\" expected"); break;
+			case 57: s = coco_string_create(L"\"POP\" expected"); break;
+			case 58: s = coco_string_create(L"\"CALL\" expected"); break;
+			case 59: s = coco_string_create(L"\"ALEN\" expected"); break;
+			case 60: s = coco_string_create(L"\"LDA\" expected"); break;
+			case 61: s = coco_string_create(L"\"STORE\" expected"); break;
+			case 62: s = coco_string_create(L"\"GOTO\" expected"); break;
+			case 63: s = coco_string_create(L"\"ICONST\" expected"); break;
+			case 64: s = coco_string_create(L"\"EQU\" expected"); break;
+			case 65: s = coco_string_create(L"\"DC\" expected"); break;
+			case 66: s = coco_string_create(L"\"DS\" expected"); break;
+			case 67: s = coco_string_create(L"\"ORG\" expected"); break;
+			case 68: s = coco_string_create(L"\"BEG\" expected"); break;
+			case 69: s = coco_string_create(L"\"@>\" expected"); break;
+			case 70: s = coco_string_create(L"\"@include\" expected"); break;
+			case 71: s = coco_string_create(L"\"@>l\" expected"); break;
+			case 72: s = coco_string_create(L"\"@load_lib\" expected"); break;
+			case 73: s = coco_string_create(L"??? expected"); break;
+			case 74: s = coco_string_create(L"invalid LibLoad"); break;
+			case 75: s = coco_string_create(L"invalid ConstDecl"); break;
+			case 76: s = coco_string_create(L"invalid FuncDecl"); break;
+			case 77: s = coco_string_create(L"invalid NativeDecl"); break;
+			case 78: s = coco_string_create(L"invalid MethodDecl"); break;
 			case 79: s = coco_string_create(L"invalid Statement"); break;
 			case 80: s = coco_string_create(L"invalid Statement"); break;
 			case 81: s = coco_string_create(L"invalid Statement"); break;
-			case 82: s = coco_string_create(L"invalid Relop"); break;
-			case 83: s = coco_string_create(L"invalid Addop"); break;
-			case 84: s = coco_string_create(L"invalid Bitop"); break;
-			case 85: s = coco_string_create(L"invalid BitShiftop"); break;
-			case 86: s = coco_string_create(L"invalid Factor"); break;
-			case 87: s = coco_string_create(L"invalid Mulop"); break;
-			case 88: s = coco_string_create(L"invalid McodeStatement"); break;
-			case 89: s = coco_string_create(L"invalid Directive"); break;
+			case 82: s = coco_string_create(L"invalid Statement"); break;
+			case 83: s = coco_string_create(L"invalid Relop"); break;
+			case 84: s = coco_string_create(L"invalid Addop"); break;
+			case 85: s = coco_string_create(L"invalid Bitop"); break;
+			case 86: s = coco_string_create(L"invalid BitShiftop"); break;
+			case 87: s = coco_string_create(L"invalid Factor"); break;
+			case 88: s = coco_string_create(L"invalid Mulop"); break;
+			case 89: s = coco_string_create(L"invalid McodeStatement"); break;
 			case 90: s = coco_string_create(L"invalid Directive"); break;
-			case 91: s = coco_string_create(L"invalid OneByteOp"); break;
-			case 92: s = coco_string_create(L"invalid TwoByteOp"); break;
-			case 93: s = coco_string_create(L"invalid Address"); break;
-			case 94: s = coco_string_create(L"invalid Load"); break;
+			case 91: s = coco_string_create(L"invalid Directive"); break;
+			case 92: s = coco_string_create(L"invalid OneByteOp"); break;
+			case 93: s = coco_string_create(L"invalid TwoByteOp"); break;
+			case 94: s = coco_string_create(L"invalid Address"); break;
+			case 95: s = coco_string_create(L"invalid Load"); break;
 
 		default:
 		{

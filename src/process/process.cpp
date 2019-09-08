@@ -56,16 +56,17 @@ int Process::fork(Args *args)
 void Process::init_cpu(int ccpu){
     Cpu*cpu = cpus[ccpu]; 
    
-    int argc = defaultArgs->argc;
-    int argv = this->heap->Malloc(argc);
-    for(int x =0 ;x<argc;x++){
-        this->heap->put(argv+1+x,STRING::String::c_str_to_dv_srt( this->heap,defaultArgs->argv[x]));
-    }
-    cpu->estack->Push(argc);
-    cpu->estack->Push(argv);
 
 
     if(ccpu == 0){
+        /*int argc = defaultArgs->argc;
+        int argv = this->heap->Malloc(argc);
+        for(int x =0 ;x<argc;x++){
+            this->heap->put(argv+1+x,STRING::String::c_str_to_dv_srt( this->heap,defaultArgs->argv[x]));
+        }
+        cpu->estack->Push(argc);
+        cpu->estack->Push(argv);*/
+        
         std::thread thread_cpu(&Cpu::run,cpu);
         thread_cpu.join();
     }else{

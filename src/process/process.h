@@ -6,12 +6,29 @@
 #include "../heap/heap.h"
 #include "strings_sets.h"
 #include "../strings/strings.h"
-#include <dlfcn.h>
+//#include <dlfcn.h>
 #include <iostream>
-#include <thread>
+
+#ifdef _WIN32 
+  #if 1
+    #include <thread>
+  #else
+    #include <mingw.thread.h> 
+  #endif
+#elif __linux__
+// linux
+  #include <thread>
+#elif __unix__ // all unices, not all compilers
+// Unix
+#elif __APPLE__
+// Mac OS, not sure if this is covered by __posix__ and/or __unix__ though...
+#endif
+
+
+
 #include "../types.h"
-#include <unordered_map>
-#include <array>
+//#include <unordered_map>
+//#include <array>
 #include <map>
 #include <typeinfo>
 #include <typeindex>
@@ -24,7 +41,8 @@
 
 #include <stdexcept>
 
-#include <ffi.h>
+#include "lib.h"
+
 
 namespace PROCESS
 {
@@ -32,8 +50,8 @@ namespace PROCESS
 class Process;
 class Cpu;
 class Native;
-class MetaFunction;
-class LibLoad;
+//class MetaFunction;
+//class LibLoad;
 
 class Args
 {
@@ -86,6 +104,9 @@ public:
   STACK::Stack *estack;
 
   STRING_SET::Strings *strings_set;
+
+  int frame_pointer = 0;
+  int stack_pointer = 0;
 };
 
 //CPU
@@ -152,106 +173,8 @@ public:
 
 
 
-class MetaFunc{
-public:
-  char *name;
-  char *signature;
-  ffi_type type;
-  unsigned int argc;
-  unsigned int id;
-  void * func;
-  char* lib_name;
-};
-
-class Lib{
-  public:
-  Lib(){};
-  Lib(char* lib_name);
-
-  void load_func(int index_abs,MetaFunc * info);
-
-  intdv call(int id_func,PROCESS::Cpu *cpu);
-
-  char * name;
-  void * handle;
-  MetaFunc ** funs;
-  //cif_info ** cache_funs;
-  int index = 0;
-};
-
-class LibLoad{
-  public:
-    LibLoad();
-    
-    void load(Lib*);
-    intdv call(int id_func,PROCESS::Cpu *cpu);    
-    void load_func(MetaFunc * info);   
-
-    int get_id_func(char*); 
-
-    std::unordered_map<char*, Lib*> libs;
-    std::unordered_map<char*, int> names;
-    Lib ** funs;
-    int index = 0;
-};
 
 
-class MetaFunction//TODO borrar
-{
-public:
-  char *name;
-  char *signature;
-  unsigned int type;
-  unsigned int argc;
-  unsigned int id;
-  void (*func)();
-};
-
-class Native//TODO borrar
-{
-  template <typename Func, Func f>
-  friend class store_func_helper;
-
-private:
-  Native();
-
-public:
-  // Native();
-  /* Here will be the instance stored. */
-  static Native *instance;
-  /* Static access method. */
-  static Native *getInstance();
-
-  Heap::Heap *heap;
-  template <typename Func, Func f>
-  void store(const std::string &name, MetaFunction meta);
-
-  template <typename Ret, typename... Args>
-  Ret call(int func, Args... args);
-
-  template <typename Ret>
-  Ret call_wrap(int func);
-
-  template <typename Ret>
-  Ret call_wrap2(int func, PROCESS::Cpu *cpu);
-
-  int get(std::string name);
-
-  template<typename fun>
-  int _register_(fun func_r){
-    int id = index;
-    func_r(); 
-    return id;
-  };
-
-
-  std::unordered_map<int, std::pair<MetaFunction, std::type_index>> m_func_map;
-  std::unordered_map<std::string, int> names;
-  //std::unordered_map<int, MetaFunction> metas;
-  int index = 0;
-};
-
-#define FUNC_MAP_STORE(map, func, meta) (map).store<decltype(&func), &func>(#func, meta);
 
 } // namespace PROCESS
 

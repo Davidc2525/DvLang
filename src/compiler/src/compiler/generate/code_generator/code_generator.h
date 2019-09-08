@@ -38,6 +38,7 @@ namespace DVLANG
                 int val; // Con: constant value
                 int adr; // Local, Static, Fld, Meth: address
                 Obj * obj; // Meth: method object
+                int co_call;
 
                 //expresion
                 int fromExprType;
