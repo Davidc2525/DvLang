@@ -54,11 +54,11 @@ build_parser:
 	rm src/parser/*.old &
 
 build_parser_es:
-	cococpp -namespace PARSER -o src/parser -frames resources/frames/  resources/DvLang_gramatica_es.atg
+	coco -namespace PARSER -o src/parser -frames resources/frames/  resources/DvLang_gramatica_es.atg
 	rm src/parser/*.old &
 
 build_parser_params:
-	cococpp -namespace PARSER_PARAMS -o src/parser_params -frames resources/frames/  resources/params.atg
+	coco -namespace PARSER_PARAMS -o src/parser_params -frames resources/frames/  resources/params.atg
 	rm src/parser_params/*.old &
 
 clear:

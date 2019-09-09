@@ -45,8 +45,6 @@ $ cd ../../
 
 __Nota:__ *make -f Makefile.win* se use igual para las otras partes donde se compila parte del codigo.
 
-__Nota:__ En __.out/__  se encuentran los binarios para linux y windows, de igual forma necesita tener las librerias requeridas instaladas o disponibles en el sistema.
-
 
 # Programando en DvLang 
 
@@ -500,6 +498,7 @@ Los "__(__"  "__)__" son opcionales en las sentencias *if* y *while*. Los "__{__
 # Proxima liberacion **
 
 - Llamadas a funciones como corrutinas
+- Arrays multidimencionales
 
 # Contribuye
 

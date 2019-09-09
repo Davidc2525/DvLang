@@ -41,9 +41,9 @@ int main(int argc, char **argv)
     vma->program_file = argv[1];       //program file
     vma->argc = argc;
     vma->argv = argv;
-    vma->max_heap  = 1024*1024*200;    // heap size
-    vma->max_f_stack =  1000*1024*100; // frame stack
-    vma->max_e_stack =  1024*1024*100; // expresion stack
+    vma->max_heap  = 1024*1024*100;    // heap size
+    vma->max_f_stack =  1000*1024*50; // frame stack
+    vma->max_e_stack =  1024*1024*50; // expresion stack
     vma->max_size_program = 1000000;   // max size program
     
 #if DEBUG  
