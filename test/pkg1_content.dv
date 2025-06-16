@@ -1,0 +1,12 @@
+package pkg1;
+
+int common_var = 10;
+
+void common_func() {
+  print "Function in pkg1";
+}
+
+// Define a function that can be called from the main test file
+void print_pkg1_var() {
+  print common_var;
+}

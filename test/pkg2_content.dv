@@ -1,0 +1,12 @@
+package pkg2;
+
+int common_var = 20; // Same name as in pkg1
+
+void common_func() { // Same name as in pkg1
+  print "Function in pkg2";
+}
+
+// Define a function that can be called from the main test file
+void print_pkg2_var() {
+  print common_var;
+}

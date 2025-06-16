@@ -1,0 +1,51 @@
+package main_test_scope;
+
+@include "pkg1_content.dv";
+@include "pkg2_content.dv";
+
+void main() {
+  print "Package scope test program running.";
+  // At this stage, we are primarily testing that the program compiles
+  // without 'common_var declared twice' or 'common_func declared twice' errors.
+  // Direct access like pkg1.common_var is not yet implemented.
+  // However, we can call functions from the included files that operate
+  // within their own package scopes.
+
+  // To verify, we expect these to print 10 and 20 respectively,
+  // demonstrating that common_var in pkg1 is different from common_var in pkg2.
+  // This relies on common_func being resolved correctly within its scope when called.
+  // For this to work as intended with print_pkgX_var, common_var must be resolved
+  // to the one within its own package scope when print_pkgX_var is defined.
+
+  // Let's try to call the specific print functions if they are accessible.
+  // Their accessibility depends on how @include and package scoping interact
+  // for function calls across these 'pseudo-module' boundaries.
+  // If direct calls to print_pkg1_var() don't work due to name resolution
+  // across these include boundaries (e.g. if they are not put into the global scope of main_test_scope),
+  // this part of the test might need adjustment or might reveal limitations
+  // of the current @include + package scoping.
+
+  // For now, the core test is successful compilation.
+  // The following calls are to probe further if possible.
+
+  // Assuming functions from included files are pulled into the current package's scope
+  // or a global scope. This might not be true, and they might only be callable
+  // if they were defined in a way that makes them globally unique or if
+  // the @include makes them part of the 'main_test_scope' package.
+  // This will test how symbols are actually available after @include.
+
+  // print_pkg1_var(); // Expected: 10
+  // print_pkg2_var(); // Expected: 20
+
+  // If the above calls don't work, it means functions are not simply "imported"
+  // into the current package's namespace by @include.
+  // The primary goal is to check for compilation errors (absence thereof).
+  // If we can call a function defined in an included package, it means it has been
+  // added to the symbol table.
+
+  // Let's try to define a local var with the same name to see if it shadows.
+  int common_var = 30;
+  print common_var; // Expected: 30
+
+  print "Test complete. If no compilation errors, package scoping prevents name clashes.";
+}

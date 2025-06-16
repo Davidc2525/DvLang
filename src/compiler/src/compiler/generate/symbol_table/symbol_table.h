@@ -83,6 +83,7 @@ namespace DVLANG
                 Scope *outer;   // to the next outer scope
                 Obj *locals;    // to the objects in this scope
                 int nVars;      // number of variables in this scope (for address allocation)
+                string packageName = "";
 
                 string toString();
 
@@ -159,6 +160,7 @@ namespace DVLANG
                 static Struct * stringType;
                 static Struct * nullType;
                 static Struct * noType;
+                static Struct * packType;
                 static Obj * chrObj; // predefined objects
                 static Obj * ordObj;
                 static Obj * lenObj;

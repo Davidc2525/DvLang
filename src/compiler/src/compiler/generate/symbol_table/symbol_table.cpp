@@ -18,6 +18,7 @@ namespace DVLANG
             Struct * SymbolTable::stringType = NULL;
             Struct * SymbolTable::nullType = NULL;
             Struct * SymbolTable::noType = NULL;
+            Struct * SymbolTable::packType = NULL;
 
             Obj * SymbolTable::chrObj = NULL; // predefined objects
             Obj * SymbolTable::ordObj = NULL;
@@ -101,10 +102,14 @@ namespace DVLANG
                 return SymbolTable::noObj;
             };
 
-            void SymbolTable::openScope(){
+            void SymbolTable::openScope(const string& pkgName = ""){
                 Scope * s = new Scope();
                 s->outer = curScope;
                 curScope = s;
+                s->packageName = pkgName;
+                if (!pkgName.empty()) {
+                    cout << "Opening scope for package: " << pkgName << endl;
+                }
                 curLevel++;
             };
 
@@ -136,9 +141,11 @@ namespace DVLANG
                 //string == char[]
                 nullType = new Struct(Struct::Class);
                 noType = new Struct(Struct::None);
+                packType = new Struct(Struct::Pack); // Initialize packType
                 noObj = new Obj(Obj::Var,"???",noType);
 
                 //create predecared object
+                insert(Obj::Type, "package", packType); // Insert "package" type
                 insert(Obj::Type,TYPES::BOOOLEAN,boolType);
                 insert(Obj::Type,TYPES::INT,intType);
                 insert(Obj::Type,TYPES::FLOAT,floatType);

@@ -166,13 +166,17 @@ IGNORE whiteSpace
 
 PRODUCTIONS
 
-  Program = package ident 
-  (. Obj *vd = new Obj();  .) 
+  Program = (. string currentPackageName; Obj *vd = new Obj(); .)
+  package ident
+  (. currentPackageName = string(coco_string_create_char(t->val));
+     cout << "PACKAGE NAME: " << currentPackageName << endl; // For debugging
+  .)
   ( [LoadExp] [LibLoad] ) 
-  (. /*tab->openScope();*/ .)
+  (. tab->insert(Obj::Type, currentPackageName, SymbolTable::packType); cout << "Inserted package identifier: " << currentPackageName << " into parent scope." << endl; .)
+  (. tab->openScope(currentPackageName); .)
   {ConstDecl | VarDecl<vd> | ClassDecl}
   "{"  {FuncDecl|NativeDecl} "}" 
-  (. /*tab->closeScope(); ajustar para cuando coloke el beta de los paketes*/  .).
+  (. tab->closeScope(); .).
 
 
 
