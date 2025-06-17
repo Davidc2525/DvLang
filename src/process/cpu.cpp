@@ -7,6 +7,7 @@
 //#include "native.cpp"
 
 #include <unistd.h>
+#include <vector> // Added for std::vector
 
 
 using namespace std;
@@ -1381,6 +1382,282 @@ void Cpu::eval(intdv instr)
 		#if DEBUG
 			cout <<"CPU["<<cpu_index<<"]: "<< "HLT " << endl;
 		#endif
+		break;
+
+	// Multidimensional array operations
+	case MALC: // Opcode 94
+	{
+		// Stack order (pushed by compiler, from bottom to top):
+		// element_size_slots, size_dim_1, ..., size_dim_N, num_dimensions
+
+		intdv num_dimensions = estack->Pop();
+
+		if (num_dimensions <= 0) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MALC Error: Number of dimensions must be > 0. Got " << num_dimensions << endl;
+			estack->Push(0); // Push null reference for error
+			break;
+		}
+
+		std::vector<intdv> actual_dim_sizes(num_dimensions);
+		for (intdv i = 0; i < num_dimensions; ++i) {
+			// Pops size_dim_N, then size_dim_N-1, ..., down to size_dim_1
+			// Store them in order: actual_dim_sizes[0] = size_dim_1, ..., actual_dim_sizes[N-1] = size_dim_N
+			actual_dim_sizes[num_dimensions - 1 - i] = estack->Pop();
+		}
+
+		intdv element_size_slots = estack->Pop();
+
+		if (element_size_slots <= 0) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MALC Error: Element size in slots must be > 0. Got " << element_size_slots << endl;
+			estack->Push(0); // Push null reference for error
+			break;
+		}
+
+		intdv total_elements = 1;
+		for (intdv i = 0; i < num_dimensions; ++i) {
+			if (actual_dim_sizes[i] <= 0) {
+				cout <<"CPU["<<cpu_index<<"]: "<< "MALC Error: Dimension size must be > 0. Dim " << i << " size " << actual_dim_sizes[i] << endl;
+				estack->Push(0); // Push null reference for error
+				goto malc_error_cleanup; // Avoid nested breaks, use goto for cleanup if needed (though none here yet)
+			}
+			total_elements *= actual_dim_sizes[i];
+		}
+
+		intdv data_size_slots = total_elements * element_size_slots;
+		// Metadata: element_size_slots, num_dimensions, then num_dimensions actual sizes
+		intdv metadata_size_slots = 1 + 1 + num_dimensions;
+		intdv total_allocation_slots = metadata_size_slots + data_size_slots;
+
+		intdv heap_ref = process->heap->Malloc(total_allocation_slots);
+
+		if (heap_ref == 0) { // Assuming Malloc returns 0 on error
+			cout <<"CPU["<<cpu_index<<"]: "<< "MALC Error: Heap allocation failed for " << total_allocation_slots << " slots." << endl;
+			estack->Push(0);
+			break;
+		}
+
+		// Write metadata to heap
+		// heap_ref points to the start of the entire block
+		// Metadata layout:
+		// heap_ref + 0 : element_size_slots
+		// heap_ref + 1 : num_dimensions
+		// heap_ref + 2 to heap_ref + 2 + num_dimensions - 1 : actual_dim_sizes[0] to actual_dim_sizes[num_dimensions-1]
+		// Data starts after metadata block.
+		process->heap->put(heap_ref, element_size_slots);
+		process->heap->put(heap_ref + 1, num_dimensions);
+		for (intdv i = 0; i < num_dimensions; ++i) {
+			process->heap->put(heap_ref + 2 + i, actual_dim_sizes[i]);
+		}
+
+		// Optional: Initialize array data to 0 (if not done by Malloc)
+		// intdv data_start_slot = heap_ref + metadata_size_slots;
+		// for (intdv i = 0; i < data_size_slots; ++i) {
+		//    process->heap->put(data_start_slot + i, 0);
+		// }
+
+		estack->Push(heap_ref); // Push the reference to the start of the heap block (metadata included)
+
+		#if DEBUG
+			cout <<"CPU["<<cpu_index<<"]: "<< "MALC: Allocated " << total_allocation_slots << " slots at heap_ref " << heap_ref << ". num_dims=" << num_dimensions << ", elem_slots=" << element_size_slots << endl;
+		#endif
+		break;
+
+	malc_error_cleanup: // Label for cleanup if needed, though not strictly necessary with current structure
+        break;
+	}
+
+	case MDLOAD: // Opcode 95
+	{
+		// Stack order (pushed by compiler, from bottom to top as on stack):
+		// array_heap_ref (bottom), index_dim_1, ..., index_dim_N, num_dimensions_on_stack (top)
+
+		intdv num_dimensions_on_stack = estack->Pop();
+
+		if (num_dimensions_on_stack <= 0) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Error: Number of dimensions on stack must be > 0. Got " << num_dimensions_on_stack << endl;
+			estack->Push(0); // Push error/default value
+			break;
+		}
+
+		std::vector<intdv> actual_indices(num_dimensions_on_stack);
+		// Compiler pushes indices for dim 1, then dim 2, ..., then dim N.
+		// So, on stack (deepest to shallowest): index_dim_1, ..., index_dim_N.
+		// Popping them: index_dim_N is popped first.
+		// We want actual_indices[0] = index_for_dim_1, actual_indices[1] = index_for_dim_2, ...
+		for (intdv i = num_dimensions_on_stack - 1; i >= 0; --i) {
+			actual_indices[i] = estack->Pop();
+		}
+
+		intdv array_heap_ref = estack->Pop();
+
+		if (array_heap_ref == 0) { // Assuming 0 is a null/invalid heap reference
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Error: Array reference is null." << endl;
+			estack->Push(0); // Push error/default value
+			break;
+		}
+
+		// Read Metadata from Heap
+		// Metadata layout at array_heap_ref:
+		// +0: stored_element_size_slots (intdv)
+		// +1: stored_num_dimensions (intdv)
+		// +2 to +2 + stored_num_dimensions - 1: stored_dimension_size[0]...stored_dimension_size[N-1] (intdv each)
+		intdv stored_element_size_slots = process->heap->get(array_heap_ref + 0);
+		intdv stored_num_dimensions = process->heap->get(array_heap_ref + 1);
+
+		if (num_dimensions_on_stack != stored_num_dimensions) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Error: Mismatch between expected dimensions on stack (" << num_dimensions_on_stack
+				 << ") and stored dimensions in array metadata (" << stored_num_dimensions << ")." << endl;
+			estack->Push(0);
+			break;
+		}
+
+		if (stored_num_dimensions <= 0) { // Should be caught by num_dimensions_on_stack check if they match
+             cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Error: Stored number of dimensions in array metadata is invalid: " << stored_num_dimensions << endl;
+			 estack->Push(0);
+             break;
+        }
+
+		std::vector<intdv> stored_dim_sizes(stored_num_dimensions);
+		for (intdv i = 0; i < stored_num_dimensions; ++i) {
+			stored_dim_sizes[i] = process->heap->get(array_heap_ref + 2 + i);
+		}
+
+		// Bounds Checking & Offset Calculation (Row-Major order)
+		// flat_element_index = index[0]*size[1]*...*size[N-1] + index[1]*size[2]*...*size[N-1] + ... + index[N-1]
+		intdv flat_element_index = 0;
+		for (intdv d = 0; d < stored_num_dimensions; ++d) {
+			intdv current_index = actual_indices[d];
+			intdv current_dim_size = stored_dim_sizes[d];
+			if (current_index < 0 || current_index >= current_dim_size) {
+				cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Error: Index out of bounds. Dimension " << d
+					 << ", Index " << current_index << ", Size " << current_dim_size << endl;
+				estack->Push(0);
+				goto mdload_error_cleanup_label; // Using goto to break out of nested logic if necessary
+			}
+			// Accumulate offset:
+			intdv multiplier_for_this_dim = 1;
+			for(intdv k=d + 1; k < stored_num_dimensions; ++k){
+				multiplier_for_this_dim *= stored_dim_sizes[k];
+			}
+			flat_element_index += current_index * multiplier_for_this_dim;
+		}
+
+		// Calculate Final Data Address
+		intdv metadata_total_slots = 1 + 1 + stored_num_dimensions; // elem_size_slots + num_dims + all_dim_sizes
+		intdv data_start_slot_address = array_heap_ref + metadata_total_slots;
+		intdv target_element_slot_address = data_start_slot_address + (flat_element_index * stored_element_size_slots);
+
+		// Load Value
+		if (stored_element_size_slots != 1) {
+			// This implementation currently assumes elements are single slots.
+			// Future work: handle multi-slot elements (e.g. structs in arrays)
+			// This might involve pushing a reference to the element or copying multiple slots.
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD Warning: Loading elements with size_slots != 1. Only first slot will be loaded. Element slots: " << stored_element_size_slots << endl;
+			// Fall-through to load the first slot.
+		}
+		intdv value_loaded = process->heap->get(target_element_slot_address);
+		estack->Push(value_loaded);
+
+		#if DEBUG
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDLOAD: Loaded value " << value_loaded << " from ref " << array_heap_ref
+				 << " (elem_slots:" << stored_element_size_slots << ", dims:" << stored_num_dimensions <<")"
+				 << " using indices resulting in flat_element_index " << flat_element_index
+				 << " (target_slot_addr " << target_element_slot_address << ")" << endl;
+		#endif
+		break;
+
+	mdload_error_cleanup_label:
+		// In case of error and goto, ensure break is hit.
+		break;
+	}
+
+	case MDSTORE: // Opcode 96
+	{
+		// Stack order (pushed by compiler, from bottom to top as on stack):
+		// array_heap_ref (bottom), index_dim_1, ..., index_dim_N, value_to_store, num_dimensions_on_stack (top)
+
+		intdv num_dimensions_on_stack = estack->Pop();
+		intdv value_to_store = estack->Pop();
+
+		if (num_dimensions_on_stack <= 0) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Error: Number of dimensions on stack must be > 0. Got " << num_dimensions_on_stack << endl;
+			break;
+		}
+
+		std::vector<intdv> actual_indices(num_dimensions_on_stack);
+		// Compiler pushes indices for dim 1, then dim 2, ..., then dim N.
+		// Popping them: index_dim_N is popped first.
+		// Store in natural order: actual_indices[0] = index_for_dim_1, ...
+		for (intdv i = num_dimensions_on_stack - 1; i >= 0; --i) {
+			actual_indices[i] = estack->Pop();
+		}
+
+		intdv array_heap_ref = estack->Pop();
+
+		if (array_heap_ref == 0) { // Assuming 0 is a null/invalid heap reference
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Error: Array reference is null." << endl;
+			break;
+		}
+
+		// Read Metadata from Heap
+		intdv stored_element_size_slots = process->heap->get(array_heap_ref + 0);
+		intdv stored_num_dimensions = process->heap->get(array_heap_ref + 1);
+
+		if (num_dimensions_on_stack != stored_num_dimensions) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Error: Mismatch between expected dimensions on stack (" << num_dimensions_on_stack
+				 << ") and stored dimensions in array metadata (" << stored_num_dimensions << ")." << endl;
+			break;
+		}
+
+		if (stored_num_dimensions <= 0) { // Should be caught if they match num_dimensions_on_stack
+             cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Error: Stored number of dimensions in array metadata is invalid: " << stored_num_dimensions << endl;
+             break;
+        }
+
+		std::vector<intdv> stored_dim_sizes(stored_num_dimensions);
+		for (intdv i = 0; i < stored_num_dimensions; ++i) {
+			stored_dim_sizes[i] = process->heap->get(array_heap_ref + 2 + i);
+		}
+
+		// Bounds Checking & Offset Calculation (Row-Major order)
+		intdv flat_element_index = 0;
+		for (intdv d = 0; d < stored_num_dimensions; ++d) {
+			intdv current_index = actual_indices[d];
+			intdv current_dim_size = stored_dim_sizes[d];
+			if (current_index < 0 || current_index >= current_dim_size) {
+				cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Error: Index out of bounds. Dimension " << d
+					 << ", Index " << current_index << ", Size " << current_dim_size << endl;
+				goto mdstore_error_cleanup_label;
+			}
+			// Accumulate offset:
+			intdv multiplier_for_this_dim = 1;
+			for(intdv k=d + 1; k < stored_num_dimensions; ++k){
+				multiplier_for_this_dim *= stored_dim_sizes[k];
+			}
+			flat_element_index += current_index * multiplier_for_this_dim;
+		}
+
+		// Calculate Final Data Address
+		intdv metadata_total_slots = 1 + 1 + stored_num_dimensions; // elem_size_slots + num_dims + all_dim_sizes
+		intdv data_start_slot_address = array_heap_ref + metadata_total_slots;
+		intdv target_element_slot_address = data_start_slot_address + (flat_element_index * stored_element_size_slots);
+
+		// Store Value
+		if (stored_element_size_slots != 1) {
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE Warning: Storing elements with size_slots != 1. Only first slot will be written. Element slots: " << stored_element_size_slots << endl;
+			// Fall-through to store into the first slot.
+		}
+		process->heap->put(target_element_slot_address, value_to_store);
+
+		#if DEBUG
+			cout <<"CPU["<<cpu_index<<"]: "<< "MDSTORE: Stored value " << value_to_store << " to ref " << array_heap_ref
+				 << " (elem_slots:" << stored_element_size_slots << ", dims:" << stored_num_dimensions <<")"
+				 << " using indices resulting in flat_element_index " << flat_element_index
+				 << " (target_slot_addr " << target_element_slot_address << ")" << endl;
+		#endif
+		break;
+
+	mdstore_error_cleanup_label:
 		break;
 	}
 

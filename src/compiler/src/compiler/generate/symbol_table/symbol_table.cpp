@@ -18,6 +18,7 @@ namespace DVLANG
             Struct * SymbolTable::stringType = NULL;
             Struct * SymbolTable::nullType = NULL;
             Struct * SymbolTable::noType = NULL;
+            Struct* SymbolTable::coroutineHandleType = nullptr; // Definition for the new handle type
 
             Obj * SymbolTable::chrObj = NULL; // predefined objects
             Obj * SymbolTable::ordObj = NULL;
@@ -147,6 +148,13 @@ namespace DVLANG
                 insert(Obj::Type,TYPES::_CHAR_,charType);
                 insert(Obj::Con,TYPES::_NULL_,nullType);
                 insert(Obj::Type,"void",noType);
+
+                // Initialize coroutineHandleType
+                coroutineHandleType = new Struct(Struct::Class); // Representing an opaque handle type
+                coroutineHandleType->name = "coroutine_handle";
+                coroutineHandleType->nFields = 0; // Explicitly set no fields
+                coroutineHandleType->fields = nullptr; // No fields for this handle type
+                insert(Obj::Type, "coroutine_handle", coroutineHandleType); // Register as a known type in the symbol table
 
                 /*chrObj = insert(Obj::Func,"chr",stringType);
                 chrObj->native = true;

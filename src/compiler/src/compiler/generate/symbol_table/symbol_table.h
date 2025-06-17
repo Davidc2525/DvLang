@@ -49,7 +49,9 @@ namespace DVLANG
 
             class Obj{
                 public:
-                static const int Con = 0, Var = 1, Type = 2, Meth = 3, Func = 4;
+                // Prog = 5 was mentioned in a conceptual example but not present; adding CoRoutineFunc as 5.
+                // If Prog is intended, CoRoutineFunc should be 6. Assuming 5 for now.
+                static const int Con = 0, Var = 1, Type = 2, Meth = 3, Func = 4, CoRoutineFunc = 5;
 
                 Obj(int kind, string name, Struct * type);
                 Obj(){};
@@ -159,6 +161,7 @@ namespace DVLANG
                 static Struct * stringType;
                 static Struct * nullType;
                 static Struct * noType;
+                static Struct* coroutineHandleType; // New static member for coroutine handle type
                 static Obj * chrObj; // predefined objects
                 static Obj * ordObj;
                 static Obj * lenObj;

@@ -25,9 +25,10 @@ namespace DVLANG
                     Static = 2, 
                     Stack = 3, 
                     Fld = 4, 
-                    Elem = 5, 
+                    Elem = 5, // For original 1D array element access
                     Meth = 6,
-                    Func = 7;
+                    Func = 7,
+                    MultiDimElemPending = 8; // New kind for pending multidimensional access
                 
                 static const int 
                     OneExpr = 0,
@@ -39,6 +40,8 @@ namespace DVLANG
                 int adr; // Local, Static, Fld, Meth: address
                 Obj * obj; // Meth: method object
                 int co_call;
+                int num_dims; // New field for number of dimensions in a MultiDimElemPending access
+
 
                 //expresion
                 int fromExprType;
@@ -46,9 +49,8 @@ namespace DVLANG
                 int relaExprOp;
                 //expresion
 
-                Operand (Obj * obj);
-
-                Operand (int val);
+                Operand (Obj * obj); // Constructor needs to init num_dims = 0; in its .cpp definition
+                Operand (int val);   // Constructor needs to init num_dims = 0; in its .cpp definition
             };
 
             class CodeGenerator{

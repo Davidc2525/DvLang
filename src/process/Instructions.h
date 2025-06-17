@@ -126,6 +126,15 @@ typedef enum
     SETLE = 92,//jle
 
     INVERT = 93,
+
+    // For multidimensional arrays
+    MALC = 94,    // Multi-dimensional allocate
+    MDLOAD = 95,  // Multi-dimensional load element
+    MDSTORE = 96, // Multi-dimensional store element
+
+    // For coroutines
+    YIELD = 97,       // Yield execution from coroutine
+    CREATE_CO = 98    // Create a new coroutine instance
 } OPCODES;
 
 } // namespace PROCESS

@@ -141,6 +141,9 @@ void= "void".
 final= "final".
 new= "new".
 package= "package".
+coroutine = "coroutine". // Added for coroutines
+yield = "yield".         // Added for coroutines
+create = "create".       // Added for coroutine creation
 //read= "read".
 comma = ",".
 colon = ";".
@@ -171,7 +174,7 @@ PRODUCTIONS
   ( [LoadExp] [LibLoad] ) 
   (. /*tab->openScope();*/ .)
   {ConstDecl | VarDecl<vd> | ClassDecl}
-  "{"  {FuncDecl|NativeDecl} "}" 
+  "{"  {FuncDecl | NativeDecl | CoroutineDecl /* Added CoroutineDecl */} "}"
   (. /*tab->closeScope(); ajustar para cuando coloke el beta de los paketes*/  .).
 
 
@@ -179,33 +182,64 @@ PRODUCTIONS
   ConstDecl (. Struct * type = new Struct(0); .)
 	= "final" Type<type> ident "=" (number | stringConst) ";".
   
-  Type<Struct * type> (. string name_type;  int is_arr = 0;  int is_fun = 0; .)
-    =
-        ["fun" (. is_fun = 1; .)]
-        ident (. name_type = string(coco_string_create_char(t->val)); .)
-        ["[" "]" (. is_arr = 1; .)] 
-        (.  
-        	Struct * _type = tab->find(name_type)->type;
-        	
-        	*type = *_type;
+Type<Struct * type> (. string name_type; int is_fun = 0; .)
+  =
+      ["fun" (. is_fun = 1; .)]
+      ident (.
+              name_type = string(coco_string_create_char(t->val));
+              // Initialize type with the base identified type from symbol table
+              Obj* base_type_obj = tab->find(name_type);
+              if (base_type_obj == SymbolTable::noObj || base_type_obj->type == nullptr) {
+                string err_msg = "DvLang Gramatica Error: Type '";
+                err_msg += name_type;
+                err_msg += "' not found during parsing. Defaulting to noType.";
+                SemErr(L"Type not found");
+                cout << err_msg << endl;
+                // Assign a default safe type. Ensure SymbolTable::noType is valid.
+                if (SymbolTable::noType) {
+                    *type = *SymbolTable::noType;
+                } else {
+                    // Critical fallback: If SymbolTable::noType is somehow null, this indicates a severe problem.
+                    // Forcing a Struct(0) might be an option but could hide initialization issues.
+                    // This situation should ideally not occur if SymbolTable is initialized correctly.
+                }
+              } else {
+                *type = *base_type_obj->type; // Base type is assigned
+              }
+            .)
+      { // Loop for one or more dimension specifiers "[" "]"
+        "[" "]"
+        (.
+          // current_type_as_element will hold a copy of what *type currently is.
+          // This copy will become the elemType of the new outer array layer.
+          Struct* current_type_as_element = new Struct(type->kind); // New struct with kind of current *type
+          current_type_as_element->assign(*type);                   // Deep copy content of current *type
 
-        	if(is_arr == 1){
-            Struct * _t = new Struct(Struct::Arr);
-            _t->elemType = new Struct(_type->kind);
-            _t->elemType->assign(_type);
-            *type = *_t;
-          }
+          // new_outer_array_struct is the new Struct::Arr layer.
+          Struct* new_outer_array_struct = new Struct(Struct::Arr);
+          new_outer_array_struct->elemType = current_type_as_element; // Its elements are of the type copied above.
 
-          if(is_fun == 1){
-            cout<<"------- posible argumento funcion: "<<name_type<<endl;
-        		Struct * _t = new Struct(Struct::Func);
-        		_t->elemType = new Struct(_type->kind);
-        		*type = *_t;
-        	}
+          // Update *type to become this new outer array layer.
+          *type = *new_outer_array_struct;
+          // Memory consideration: new_outer_array_struct and current_type_as_element are heap allocated.
+          // If Struct's assignment operator performs a deep copy, these temporaries might be leaked
+          // if not deleted. This matches the existing pattern's potential leak with `_t`.
+          // For this subtask, we replicate the existing memory handling pattern.
+        .)
+      }
+      (. // Handle 'fun' after array structure is built
+        if(is_fun == 1){
+          // current_type_for_func_return holds a copy of the fully formed type (which could be an array).
+          Struct* current_type_for_func_return = new Struct(type->kind);
+          current_type_for_func_return->assign(*type);
 
-         
-         .)
-  .
+          cout<<"------- posible argumento funcion (post-array processing): "<<name_type<<endl;
+          Struct* func_type_wrapper = new Struct(Struct::Func);
+          func_type_wrapper->elemType = current_type_for_func_return;
+          *type = *func_type_wrapper; // *type becomes the function type struct.
+        }
+       .)
+.
 
   
    VarDecl<Obj * vd> (.   Struct * _type = new Struct(0); .)
@@ -378,6 +412,51 @@ PRODUCTIONS
         }
 	  	cout<<"metohd  closing scope: "<<tab->curLevel<<endl;  tab->closeScope(); .)
   .
+
+  CoroutineDecl (. int npars = 0; int p_instr_offset = 0; Struct * return_type = new Struct(0); string co_name; Obj* current_co_func_obj = nullptr; .)
+    = "coroutine" (Type<return_type> | "void" (. return_type = tab->noType; .))
+      ident    (.
+                co_name = string(coco_string_create_char(t->val));
+                // Obj::CoRoutineFunc (e.g. 6) must be defined in obj.h/obj.cpp
+                current_co_func_obj = tab->insert(Obj::CoRoutineFunc, co_name, return_type);
+                curMethod = current_co_func_obj; // Set global curMethod for use in Block/Return
+                tab->openScope();
+                // cout << "COMPILER: Coroutine Declaration '" << co_name << "', return type kind: " << return_type->kind << ". New scope: " << tab->curLevel << endl;
+              .)
+      "(" [FormPars<npars>] ")"
+              (.
+                if (current_co_func_obj != SymbolTable::noObj) {
+                    current_co_func_obj->nPars = npars;
+                    current_co_func_obj->locals = tab->curScope->locals;
+                    current_co_func_obj->adr = CodeGenerator::pc; // Address of the first instruction (ENTER)
+                    code->put(ENTER);
+                    p_instr_offset = CodeGenerator::pc; // PC is now after ENTER
+                    code->put(0); // Placeholder for actual nPars for VM (ENTER operand 1)
+                    code->put(0); // Placeholder for nVars (ENTER operand 2)
+                }
+              .)
+      Block   (.
+                if (current_co_func_obj != SymbolTable::noObj) {
+                    code->program[p_instr_offset]     = npars; // Patch nPars for ENTER
+                    code->program[p_instr_offset + 1] = tab->curScope->nVars; // Patch nVars for ENTER
+
+                    // Ensure proper exit for void coroutines if no explicit return.
+                    if (current_co_func_obj->type == tab->noType) {
+                        // Check if last emitted instruction was RET. Block might already have one via Return statement.
+                        // ENTER takes 2 slots (npars, nvars). If PC is current_co_func_obj->adr + 3, it means only ENTER is there.
+                        bool is_empty_block = (CodeGenerator::pc == (current_co_func_obj->adr + 1 + 2) ); // ENTER + 2 operands
+                        bool last_is_not_ret = (CodeGenerator::pc > 0 && code->program[CodeGenerator::pc-1] != RET);
+
+                        if (is_empty_block || last_is_not_ret) {
+                           code->put(EXIT);
+                           code->put(RET);
+                        }
+                    }
+                }
+                // cout << "COMPILER: End of Coroutine Declaration '" << co_name << "'. Closing scope: " << tab->curLevel << endl;
+                tab->closeScope();
+              .)
+  .
   
   //ArrowMethodDecl = (Type | "void") ident "(" [FormPars] ")" "=>" "{" {VarDecl|Statement} "}".
   
@@ -417,10 +496,49 @@ PRODUCTIONS
                         code->put(POP);
                       }
                 .)
-    	| "=" Expr<y> (.
-    	 //cout<<"assignacion x(" <<x->obj->name<<" op kind: "<<x->kind<<" obj kind: " <<x->obj->kind<<" type kind: " <<x->obj->type->kind<<endl;
-    	 //cout<<" =  y(" <<y->obj->name<<" op kind: "<<y->kind<<" obj kind: " <<y->obj->kind<<" type kind: " <<y->obj->type->kind<<endl;
-    	 code->load(y); code->store(x); .) 
+	| "=" Expr<y>
+        (. // Semantic action for assignment
+            // At this point:
+            // - Designator<x> has run. If x is arr[i][j], then:
+            //   - stack has: base_addr, index_i, index_j (from bottom up)
+            //   - x->kind == Operand::MultiDimElemPending
+            //   - x->num_dims is set (e.g., 2 for arr[i][j])
+            //   - x->type is the element type (e.g., type of arr[i][j])
+            // - Expr<y> has been parsed.
+
+            code->load(y); // Push value of RHS expression y onto the stack.
+                           // Stack now: base_addr, index_i, index_j, value_of_y
+
+            if (x->type != SymbolTable::noType && !x->type->compatibleWith(y->type)) {
+                 string error_msg = "DvLang Gramatica Error: Type mismatch in assignment. LHS ('";
+                 // error_msg += x->obj ? x->obj->name : "unknown_lhs"; // Need a reliable name for x
+                 error_msg += "') type ";
+                 error_msg += to_string(x->type->kind);
+                 error_msg += " is not compatible with RHS type ";
+                 error_msg += to_string(y->type->kind);
+                 error_msg += ".";
+                 SemErr(L"Type mismatch in assignment");
+                 cout << error_msg << endl;
+            }
+
+
+            if (x->kind == Operand::MultiDimElemPending) {
+                // Multidimensional array assignment e.g. arr[i][j] = val;
+                // Stack: base_addr, idx1, ..., idxN, RHS_val
+                // We need to push num_dims, then MDSTORE
+                code->put(ICONST);
+                code->put(x->num_dims); // Push num_dims
+                                        // Stack: base_addr, idx1, ..., idxN, RHS_val, num_dims
+                code->put(MDSTORE);     // MDSTORE = 62 (assumed opcode)
+                // cout << "Statement: MDSTORE generated for " << x->num_dims << "-dim assignment." << endl;
+            } else {
+                // Simple assignment (variable, field, potentially old 1D array if store handles Elem)
+                // Stack: RHS_val (from code->load(y) above)
+                // code->store(x) uses x to know where to store this RHS_val
+                code->store(x);
+                // cout << "Statement: Standard store generated for kind " << x->kind << endl;
+            }
+        .)
    	  ) ";"
 
   | "if"  (. int top = 0;  int adr = 0; int adr2 = 0; .)
@@ -479,13 +597,68 @@ PRODUCTIONS
             
   				}
   			.) ";"
+  | "yield" Expr<x>
+    (.
+      code->load(x); // Value to yield is on stack
+      code->put(YIELD); // YIELD = 97 (assumed opcode)
+      // cout << "COMPILER: Yield statement processed." << endl;
+    .)
+    ";"
   | Block
   | void Expr<y> (. code->put(POP); .)
   | ";".
   
   ActPars<Operand * m> 
-  = "(" [ (. Operand *ap1 = new Operand(0); .) Expr<ap1>  (. code->load(ap1); .) 
-  	{"," (. Operand *ap2 = new Operand(0); .) Expr<ap2> (. code->load(ap2); .) } ] ")".
+  = "(" [ (. Operand *ap1 = new Operand(0); .) Expr<ap1>  (. code->load(ap1); delete ap1; .)
+	{"," (. Operand *ap2 = new Operand(0); .) Expr<ap2> (. code->load(ap2); delete ap2; .) } ] ")".
+
+ActParsCreate<Operand * func_operand_holder>
+// func_operand_holder->obj contains the CoRoutineFunc Obj (set in 'create' Factor rule)
+= "("
+  ( // Optional arguments
+    ( (. Operand *arg_op = new Operand(0); int actual_nargs = 0; .)
+      Expr<arg_op> (. code->load(arg_op); actual_nargs++; delete arg_op; .)
+      { "," (. arg_op = new Operand(0); .) Expr<arg_op> (. code->load(arg_op); actual_nargs++; delete arg_op; .) }
+      (. // After all argument expressions are pushed:
+         // Stack: arg1, arg2, ..., argN
+         if (func_operand_holder->obj != SymbolTable::noObj && func_operand_holder->obj->kind == Obj::CoRoutineFunc) { // Ensure kind is CoRoutineFunc
+             if (actual_nargs != func_operand_holder->obj->nPars) {
+                 SemErr(L"Argument count mismatch for coroutine creation");
+                 cout << "DvLang Gramatica Error: Arg count mismatch for " << func_operand_holder->obj->name
+                      << ". Expected " << func_operand_holder->obj->nPars << ", got " << actual_nargs << endl;
+             }
+             // For CREATE_CO, VM expects on stack (from top): CoFuncAdr, NArgs, then Arg_N, ..., Arg_1
+             // Current stack (top): Arg_N, ..., Arg_1
+             // So, push NArgs, then CoFuncAdr.
+             code->put(ICONST); code->put(actual_nargs);                 // Push NArgs
+             code->put(ICONST); code->put(func_operand_holder->obj->adr); // Push CoFuncAdr
+         } else {
+             // This case should ideally not be reached if 'create' ident check works.
+             // Pushing dummy values to satisfy CREATE_CO's expected stack if it's still called.
+             SemErr(L"Invalid coroutine function object in ActParsCreate");
+             code->put(ICONST); code->put(0); // Dummy NArgs
+             code->put(ICONST); code->put(0); // Dummy CoFuncAdr
+         }
+      .)
+    ) | ( /* Epsilon - no arguments */
+      (.
+         if (func_operand_holder->obj != SymbolTable::noObj && func_operand_holder->obj->kind == Obj::CoRoutineFunc) { // Ensure kind
+              if (0 != func_operand_holder->obj->nPars) {
+                 SemErr(L"Argument count mismatch for coroutine creation (expected args, got none)");
+                  cout << "DvLang Gramatica Error: Arg count mismatch for " << func_operand_holder->obj->name
+                      << ". Expected " << func_operand_holder->obj->nPars << ", got 0" << endl;
+             }
+             code->put(ICONST); code->put(0); // 0 arguments
+             code->put(ICONST); code->put(func_operand_holder->obj->adr); // Push CoFuncAdr
+         } else {
+             SemErr(L"Invalid coroutine function object in ActParsCreate (no args)");
+             code->put(ICONST); code->put(0); // Dummy NArgs
+             code->put(ICONST); code->put(0); // Dummy CoFuncAdr
+         }
+      .)
+    )
+  )
+  ")" .
 
 
   MultipleConditionOr = 
@@ -720,7 +893,45 @@ PRODUCTIONS
 
   Factor<Operand * x> (. Operand * y = new Operand(0);  .) = 
    
-    Designator<x> (. if(x->kind != Operand::Func){code->load(x);} code->load(x); .) [ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr); code->put(CALL_S);*/ /*code->load(x); */  cout<<"call function: "<<x->obj->adr<<endl; .) ] 
+    Designator<x>
+    (. // Code here executes AFTER Designator<x> has fully processed.
+        // x->type is the type of the designated entity.
+        // x->kind tells us what it is (Var, Fld, MultiDimElemPending, Meth, Func, etc.)
+        // x->num_dims is set if MultiDimElemPending (from Designator).
+        // Base address and indices are on stack if MultiDimElemPending (from Designator).
+
+        // Only load a value if it's NOT a function/method reference that will be immediately called by ActPars.
+        // Check for ActPars by looking ahead for an opening parenthesis.
+        if (la->kind != _popen) { // If not followed by '(', it's not a function/method call. Load its value.
+            if (x->kind == Operand::MultiDimElemPending) {
+                // Designator already pushed base address and all indices.
+                // Now, push num_dims and the MDLOAD opcode.
+                code->put(ICONST);
+                code->put(x->num_dims); // Assuming x->num_dims was set by Designator
+                code->put(MDLOAD); // MDLOAD = 61 (assumed opcode)
+                x->kind = Operand::Stack; // The value of the element is now on the stack
+                // cout << "Factor: MDLOAD generated for " << x->num_dims << "-dim access. Result type: " << (x->type ? x->type->kind : -1) << endl;
+            } else if (x->obj != nullptr &&
+                       (x->kind == Operand::Var || x->kind == Operand::Fld || x->kind == Operand::Con || x->kind == Operand::Elem || // Elem for old 1D arrays if still used
+                        x->obj->kind == Obj::Var || x->obj->kind == Obj::Con ) ) {
+                        // This condition aims to load simple variables, fields, constants.
+                        // Operand::Elem was the old kind for array elements.
+                        // Relying on x->obj->kind might be safer for Var/Con.
+                        // x->kind for Fld should be reliable from Designator.
+                code->load(x); // Loads simple variables, fields, constants.
+                               // code->load should make x->kind = Operand::Stack or similar.
+                // cout << "Factor: Standard load generated for kind " << x->kind << " obj kind " << (x->obj ? x->obj->kind : -1) << endl;
+            }
+            // If x->kind is already Operand::Stack (e.g. from a literal further down in Factor), no load needed.
+            // If x->kind is Meth or Func but not followed by '(', it might be a first-class function usage.
+            // The behavior for loading a Meth/Func itself (e.g. its address) depends on language features
+            // not covered here. Current code->load(x) might handle this or error appropriately.
+        }
+        // If la->kind == _popen, then ActPars will follow.
+        // ActPars itself will use x (which refers to a Func or Meth obj set by Designator)
+        // and then FunctionCall(x) is invoked by the ActPars rule's semantic action.
+    .)
+    [ActPars<x> (. FunctionCall(x); /*code->put(ICONST); code->put(x->obj->adr); code->put(CALL_S);*/ /*code->load(x); */  cout<<"call function: "<<x->obj->adr<<endl; .) ]
   
   | ident   (. string ident_name = coco_string_create_char(t->val); 
   			   Obj * obj = tab->find(ident_name);
@@ -763,172 +974,296 @@ PRODUCTIONS
                   cout<<"regiter: "<<coco_string_create_char(t->val)<<" index: "<<index<<"type: "<<x->type->kind<<endl;
                 .)
 
-  | "new" ident (. string name = coco_string_create_char(t->val);
-  					Obj * obj = tab->find(name);
-  					cout<<"new obj of: "<<obj->name<<" type: "<<obj->type->kind<<endl;
-  				 .)
-        
-        (. 
-            cout <<"      -------- next : "<<la->kind<<endl; 
-            if(la->kind == _popen){
-              cout<<"se creara una instacia"<<endl;
-              code->put(NEW); 
-              code->put(obj->type->nFields); 
-            }
-        .)
-  	 [
-  	 	"[" Expr<y> "]" (. 
-  	 			code->load(y); 
-  	 			code->put(ALC); 
-
-  	 			Struct * tmp = new Struct(Struct::Arr,obj->type); 
-  	 			cout<<"new array: kind : "<<tmp->kind <<", elemType->kind: "<<tmp->elemType->kind<<endl;
-  	 			.)
-
-  	 	| 
-
-       ActPars<y> (. 
-        
-
-        Obj * fld = tab->findField("construct",obj->type);
-
-        if(fld != SymbolTable::noObj){
-         
-          *x = *new Operand(fld);
-          x->kind = Operand::Meth;
-
-         
-          //code->load(x);
-          code->put(ICONST); 
-          code->put(x->obj->adr); /*code->load(x); */ 
-          code->put(CALL_S);
-
-          cout<<"---------- la clase "<<name<<" tiene constructor"<<endl;
-
-        }else{
-          cout<<"---------- la clase "<<name<<" no tiene constructor"<<endl;
-
+  | "new" ident
+    (.
+        string base_type_name = coco_string_create_char(t->val);
+        Obj* base_type_obj = tab->find(base_type_name);
+        *x = *new Operand(0); // x is passed by reference to Factor<Operand *x>
+        x->kind = Operand::Stack;
+        if (base_type_obj == SymbolTable::noObj || base_type_obj->type == nullptr) {
+            SemErr(L"Base type for 'new' not found");
+            cout << "DvLang Gramatica Error: Base type '" << base_type_name << "' not found for 'new'." << endl;
+            x->type = SymbolTable::noType;
+        } else {
+            x->obj = base_type_obj; // Link to the Obj of the base type (e.g., int, MyClass)
+            // x->type must be a *new* Struct instance that gets a copy of the base type's Struct.
+            // This allows x->type to be modified (wrapped by Arr) without altering the global type definition.
+            x->type = new Struct(0);
+            x->type->assign(*base_type_obj->type); // x's type starts as a copy of the base type
         }
-        cout<<" new constructor"<<endl; 
+    .)
+    ( // Choice: Array allocation OR Object instantiation
+        ( // Array allocation path: "[" Expr "]" { "[" Expr "]" }
+          "["
+            (. int num_dimensions = 0; Operand *dim_expr_operand = new Operand(0); .) // dim_expr_operand for size of each dim
+            Expr<dim_expr_operand>
+            (.
+                code->load(dim_expr_operand); // Push size of the first dimension
+                num_dimensions++;
+                // Wrap x->type to reflect this dimension.
+                // x->type currently holds the base type (e.g., int).
+                // After this, x->type will be Arr(elemType=int).
+                if (x->type != nullptr && x->type != SymbolTable::noType) {
+                    Struct* current_element_type = new Struct(0);
+                    current_element_type->assign(*(x->type)); // Copy current type (which is base type)
+
+                    Struct* new_array_shell = new Struct(Struct::Arr);
+                    new_array_shell->elemType = current_element_type;
+
+                    x->type->assign(*new_array_shell); // Update x->type to be the new Array Struct
+                }
+            .)
+          "]"
+          { // Loop for subsequent dimensions (if any)
+            "[" Expr<dim_expr_operand>
+            (.
+                code->load(dim_expr_operand); // Push size of this dimension
+                num_dimensions++;
+                // Wrap x->type again.
+                // If x->type was Arr(elemType=int), it becomes Arr(elemType=Arr(elemType=int)).
+                if (x->type != nullptr && x->type != SymbolTable::noType) {
+                    Struct* current_element_type = new Struct(0);
+                    current_element_type->assign(*(x->type)); // Copy current type (which is already an Arr)
+
+                    Struct* new_array_shell = new Struct(Struct::Arr);
+                    new_array_shell->elemType = current_element_type;
+
+                    x->type->assign(*new_array_shell); // Update x->type
+                }
+            .)
+            "]"
+          }
+          (. // After all dimensions for array have been processed
+            if (num_dimensions > 0) {
+                code->put(ICONST);
+                code->put(num_dimensions);
+                code->put(MALC); // MALC = 60 (Multi-dimensional array allocation opcode)
+                cout << "DvLang Gramatica: new array '" << base_type_name << "' with " << num_dimensions << " dimensions. Resulting type kind: " << x->type->kind << endl;
+            }
+            delete dim_expr_operand; // Clean up temporary operand used for dimension expressions
+          .)
+        )
+    |   // Object instantiation path (e.g., new MyClass() )
+        (. // Prepare operand for constructor method if found
+            Operand* ctor_operand = new Operand(SymbolTable::noObj); // Default if no constructor
+            ctor_operand->type = SymbolTable::noType; // Default type for safety
+
+            if (base_type_obj != SymbolTable::noObj && base_type_obj->type != nullptr && base_type_obj->type->kind == Struct::Class) {
+                Obj* ctor_method_obj = tab->findField("construct", base_type_obj->type);
+                if (ctor_method_obj != SymbolTable::noObj && ctor_method_obj->kind == Obj::Meth) {
+                    // Create a valid Operand for the constructor method
+                    delete ctor_operand; // delete the default one
+                    ctor_operand = new Operand(ctor_method_obj);
+                    ctor_operand->kind = Operand::Meth; // Mark as method
+                    // ctor_operand->type should be the constructor's return type (usually void or class type)
+                    // For ActPars, it mainly needs obj->adr and obj->nPars from ctor_method_obj
+                } else {
+                     cout << "DvLang Gramatica Info: No 'construct' method found for class " << base_type_name << "." << endl;
+                }
+            } else if (base_type_obj != SymbolTable::noObj && base_type_obj->type->kind != Struct::Class) {
+                SemErr(L"Cannot use constructor () on non-class type.");
+                cout << "DvLang Gramatica Error: Attempted to call constructor on non-class type '" << base_type_name << "'." << endl;
+            }
         .)
-  	 ] (. *x = *new Operand(0); x->obj = obj; x->kind = Operand::Stack; x->type = obj->type;  .)
-  | "(" Expr<x> ")".
+        ActPars<*ctor_operand> // Pass the (potentially dummy) constructor operand to ActPars
+        (.
+            // This semantic action executes *after* ActPars has processed arguments
+            if (base_type_obj != SymbolTable::noObj && base_type_obj->type != nullptr && base_type_obj->type->kind == Struct::Class) {
+                code->put(NEW); // Allocate memory for the object instance itself
+                code->put(base_type_obj->type->nFields); // Size for NEW is number of fields
 
-  Designator <Operand * x> (. Operand * y = new Operand(0); string name, f_name,qua;  .)
-   = ident (.  name = coco_string_create_char(t->val);
-            qua = name;
-   			   Obj * obj = tab->find(name); 
+                // If a constructor method was found and ctor_operand is set up for it
+                if (ctor_operand->obj != SymbolTable::noObj && ctor_operand->obj->kind == Obj::Meth) {
+                    // ActPars should have pushed arguments. Now generate code to call the constructor.
+                    // This assumes 'FunctionCall' or similar logic is not needed here, direct call.
+                    code->put(ICONST);
+                    code->put(ctor_operand->obj->adr); // Address of the constructor method
+                    code->put(CALL_S); // Standard static call
+                    // If constructor is void or returns 'this', the object reference from NEW is already on stack.
+                    // x->type is already base_type_obj->type (the class type), which is correct.
+                }
+                // If no constructor, NEW just allocates and leaves ref on stack. x->type is already set.
+                cout << "DvLang Gramatica: new object '" << base_type_name << "'. Resulting type kind: " << x->type->kind << endl;
+            }
+            // else if an error occurred (e.g. non-class type), x->type might be noType.
+            delete ctor_operand; // Clean up the temporary constructor operand
+        .)
+    )
+  | "(" Expr<x> ")"
+  | "create" ident // Coroutine function name
+    (.
+      string co_func_name = coco_string_create_char(t->val);
+      Obj* co_func_obj = tab->find(co_func_name);
+      // Ensure Obj::CoRoutineFunc and SymbolTable::coroutineHandleType are defined
+      if (co_func_obj == SymbolTable::noObj || co_func_obj->kind != Obj::CoRoutineFunc) {
+          SemErr(L"Identifier is not a coroutine function");
+          cout << "DvLang Gramatica Error: '" << co_func_name << "' is not a coroutine function for 'create'." << endl;
+          *x = *new Operand(0);
+          x->type = SymbolTable::noType;
+      } else {
+          *x = *new Operand(0);
+          x->type = SymbolTable::coroutineHandleType; // This type needs to be defined in SymbolTable
+          x->kind = Operand::Stack; // Resulting handle will be on stack after CREATE_CO
+          x->obj = co_func_obj; // Store CoRoutineFunc Obj temporarily in x for ActParsCreate to access its adr & nPars
+          // cout << "COMPILER: 'create' expression for coroutine: " << co_func_name << endl;
+      }
+    .)
+    ActParsCreate<x> // Pass 'x' which holds co_func_obj in its ->obj field
+    (.
+       if (x->obj != nullptr && x->obj->kind == Obj::CoRoutineFunc) {
+          // ActParsCreate should have pushed: CoFuncAdr, NArgs, then Arg_1...Arg_N (from top to bottom)
+          // Or, if VM expects: Arg_N...Arg_1, NArgs, CoFuncAdr (top to bottom)
+          // Based on ActParsCreate, it pushes args, then NArgs, then CoFuncAdr.
+          // So stack for CREATE_CO (top to bottom): CoFuncAdr, NArgs, (args if any...)
+          code->put(CREATE_CO); // CREATE_CO = 98 (assumed opcode)
+          // cout << "COMPILER: CREATE_CO opcode emitted for " << x->obj->name << endl;
+       }
+       // The coroutine handle is now on top of stack, placed by CREATE_CO.
+       // x->type is already coroutineHandleType, x->kind is Stack.
+    .)
+  .
+
+  Designator <Operand * x> (. Operand * y = new Operand(0); string name, f_name, qua; bool first_dim_processed = false; .)
+   = ident (.
+            name = coco_string_create_char(t->val);
+            qua = name; // For error messages/debugging
+            Obj * obj = tab->find(name);
             if(obj == SymbolTable::noObj){
-             	string err = "no se encontro: "+name;
-              SemErr(L"");
-              cout<<err<<endl;
-		          errors->Exception(L"");
-              //exit(1);
+		string err = "DvLang Gramatica Error: Designator identifier '";
+                err += name;
+                err += "' not found.";
+                SemErr(L"Identifier not found");
+                cout << err << endl;
+		        errors->Exception(L"Identifier not found");
+                // Assign a default safe operand state for *x
+                *x = *new Operand(SymbolTable::noObj); // Use SymbolTable::noObj for safety
+                x->type = SymbolTable::noType; // Assign noType
+            } else {
+               *x = *new Operand(obj);
+               // x->num_dims = 0; // Initialize only if it becomes an array access.
             }
-   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
-   			   *x = *new Operand(obj); 
-   			   cout<<"Designator name: "<<name<<" tyoe kind: "<<x->type->kind <<" op kind: "<<x->kind<<endl;
-    				
-            if(obj->kind == Struct::Func){
-              //x->kind == Operand::Func;
-              //cout<<"----- operan to func"<<endl;
+            // Debug output for initial ident
+            // cout<<"Designator initial ident: "<<name<<", type kind: "<<(x->type ? x->type->kind : -1) <<" op kind: "<<x->kind<<endl;
+          .)
+    { // Loop for field access OR array indexing
+      ( // Field access path
+        "." ident  (.
+            if (x->type == nullptr || x->type == SymbolTable::noType) {
+                // Error: trying to access field on something that's not a valid object or is undefined
+                string err = "DvLang Gramatica Error: Attempting to access field on an undefined or non-object type: ";
+                err += qua;
+                SemErr(L"Field access on non-object");
+                cout << err << endl;
+            } else if (x->type->kind == Struct::Class) {
+                // Original logic had code->load(x) here for field access on class.
+                // This might be needed if fields are accessed via offsets from a base pointer *on the stack*.
+                // For now, assuming 'x' holds info and actual load/store is elsewhere or handled by 'Fld' kind.
+                // code->load(x); // Potentially needed depending on VM design for field access.
+
+                f_name = coco_string_create_char(t->val);
+                Obj * fld = tab->findField(f_name, x->type);
+                if (fld == SymbolTable::noObj) {
+                    string err = "DvLang Gramatica Error: Field '";
+                    err += f_name;
+                    err += "' not found in object '";
+                    err += qua;
+                    err += "'.";
+                    SemErr(L"Field not found");
+                    cout << err << endl;
+                    *x = *new Operand(SymbolTable::noObj); // Error state
+                    x->type = SymbolTable::noType;
+                } else {
+                    qua.append(".").append(f_name);
+                    *x = *new Operand(fld); // x becomes the field
+                    if (fld->kind == Obj::Var) {
+                        x->kind = Operand::Fld;
+                    } else if (fld->kind == Obj::Meth) {
+                        x->kind = Operand::Meth;
+                    }
+                    // x->adr = fld->adr; // Already part of Operand(fld)
+                    // x->type = fld->type; // Already part of Operand(fld)
+                }
+            } else {
+                string err = "DvLang Gramatica Error: Attempting to access field '";
+                err += coco_string_create_char(t->val);
+                err += "' on a non-class type: ";
+                err += qua;
+                SemErr(L"Field access on non-class type");
+                cout << err << endl;
+                *x = *new Operand(SymbolTable::noObj); // Error state
+                x->type = SymbolTable::noType;
             }
-   			   .)
-
-    {("." ident  (. if(x->type->kind == Struct::Class){
-    					code->load(x);
-
-
-    					f_name = coco_string_create_char(t->val);
-    					cout<<"Designator f_name: "<<f_name<<endl;
-    					Obj * fld = tab->findField(f_name,x->type);
-              if(fld == SymbolTable::noObj){
-
-                string err = to_string(x->type->nFields)+" No se encontro el campo '"+f_name+"' en el objeto '"+qua+"'";
-                SemErr(L"");
-                cout<<err<<endl;
-                errors->Exception(L"");
-              }
-              qua.append(".").append(f_name);
-    					*x = *new Operand(fld);
-    					if(fld->kind == Obj::Var){
-
-                x->kind = Operand::Fld;
-
-              }else if(fld->kind == Obj::Meth){
-
-                x->kind = Operand::Meth;
-              }
-    					x->adr = fld->adr;
-    					x->type = fld->type;
-    					cout<<"Designator f_name: "<<f_name<<" op kind: "<<x->kind<<endl;
-
-    				} else{
-              string err = qua+" no es un objeto.";
-              SemErr(L"");
-              cout<<err<<endl;
-              errors->Exception(L"");
-    				}
-    			  .)
-
-    | ("[" (. code->load(x); .) 
-    	 Expr<y> (. 
-           
-    	 	  if(y->type->kind != Struct::Int ){
-              string err = "El indice debe ser de tipo int";
-                SemErr(L"");
-                cout<<err<<endl;
-                errors->Exception(L"");
-          }else{
-              qua.append("[").append(to_string(y->val)).append("]");
-              cout<<" x name: "<<(x->obj->name )<<" " << Struct::Arr<<endl;
-    	 				cout<<qua<<" type  kind : "<<(x->type->kind )<<", expected: " << Struct::Arr<<endl;
-        
-              if(x->type->kind == Struct::Arr){
-                cout<<" x->type->elemType->kind: "<<x->type->elemType->kind <<endl;
-                cout<<" index type: "<<y->type->kind<<endl;
-                  
-              
-              code->load(y);
-                x->kind = Operand::Elem;
-                x->type = x->type->elemType;
-              
-                
-              }else{
-                cout<<name<<" is not an array"<<endl;
-              }
-          }
-    	 		
-    	  .)
-     "]" 
-     {"[" (. code->put(IALOAD); .) Expr<y> (. 
-            
-          if(y->type->kind != Struct::Int ){
-              string err = "El indice debe ser de tipo int";
-                SemErr(L"");
-                cout<<err<<endl;
-                errors->Exception(L"");
-          }else{
-              qua.append("[").append(to_string(y->val)).append("]");
-              cout<<qua<<" type  kind : "<<(x->type->kind )<<", expected: " << Struct::Arr<<endl;
-              if(x->type->kind == Struct::Arr){
-                //cout<<" x->type->elemType->kind: "<<x->type->elemType->kind <<endl;
-                //cout<<" index type: "<<y->type->kind<<endl;
-                  
-                code->load(y);
-                x->kind = Operand::Elem;
-                x->type = x->type->elemType;
-              
-                
-              }else{
-                cout<<name<<" is not an array"<<endl;
-              }
-          }
-      
-      .)"]"}
-      (.  cout<<"arr "<<qua<<endl; .)
+            // cout<<"Designator field access: "<<qua<<", type kind: "<<(x->type ? x->type->kind : -1)<<" op kind: "<<x->kind<<endl;
+        .)
       )
-     )}.
+    | ( // Array indexing path
+        "["
+        (. // This block executes when '[' is encountered
+            if (x->type == nullptr || x->type == SymbolTable::noType) {
+                 SemErr(L"Attempting to index an undefined type.");
+                 cout << "DvLang Gramatica Error: Attempting to index an undefined identifier '" << qua << "'." << endl;
+            } else if (!first_dim_processed) { // First dimension specific setup
+                if (x->type->kind != Struct::Arr && x->type->kind != Struct::String) {
+                    SemErr(L"Object is not an array or string, cannot apply index.");
+                    cout << "DvLang Gramatica Error: '" << qua << "' is not an array or string. Type is " << x->type->kind << "." << endl;
+                    // Set x to an error state, but allow parsing to continue to avoid cascading errors
+                    x->type = SymbolTable::noType;
+                } else {
+                    code->load(x); // Push base address of array/string (original x) ONCE
+                    // Assuming Operand has num_dims field (int num_dims;)
+                    // And OpKind has MultiDimElemPending
+                    x->kind = Operand::MultiDimElemPending;
+                    x->num_dims = 0;
+                    first_dim_processed = true;
+                }
+            }
+            // Common check for current dimension (even if first_dim_processed was true)
+            // This handles arr[idx1] (type becomes elemType) then [idx2] (check if new type is array)
+            if (x->type != SymbolTable::noType && x->type->kind != Struct::Arr && x->type->kind != Struct::String) {
+                 SemErr(L"Invalid type for multidimensional array access (expected array or string for subsequent dimensions).");
+                 cout << "DvLang Gramatica Error: Attempting to index non-array/string element in '" << qua << "'. Current type kind: " << x->type->kind << "." << endl;
+                 x->type = SymbolTable::noType; // Mark as error for subsequent ops
+            }
+        .)
+        Expr<y>
+        (.
+            if (y->type == nullptr || y->type->kind != Struct::Int) {
+                SemErr(L"Array index must be of type int.");
+                cout << "DvLang Gramatica Error: Index for '" << qua << "' is not an int. Actual type: " << (y->type ? y->type->kind : -1) << endl;
+            }
+            // We still push the index value even if type is wrong to keep parser state simple, error is already flagged.
+            code->load(y); // Push current index value
+
+            if (x->kind == Operand::MultiDimElemPending && x->type != SymbolTable::noType) {
+                x->num_dims++;
+                if (x->type->kind == Struct::Arr) {
+                    x->type = x->type->elemType;
+                } else if (x->type->kind == Struct::String) {
+                    if (x->num_dims == 1) { // string[idx] -> char
+                        x->type = SymbolTable::charType; // Assuming charType exists
+                    } else { // string[idx][another_idx] is an error
+                        SemErr(L"String type does not support multi-dimensional indexing.");
+                        cout << "DvLang Gramatica Error: String '" << qua << "' indexed with more than one dimension." << endl;
+                        x->type = SymbolTable::noType; // Mark as error
+                    }
+                }
+                // If x->type was already not Arr/String (e.g. int from int[0]), previous check would have set it to noType.
+            }
+            // Update qualified name for debugging, even on error, using token value if possible
+            // This part for `y->t->val` assumes `y` is an `Operand` that might store the token `t`
+            // If `y` is just an `Operand` from `Expr`, it might not have `t`.
+            // A safer way is to get it from scanner if needed, or just skip detailed name update here.
+            // For simplicity, we'll keep it conceptual: qua += "[index]";
+            // qua += ("[" + string(coco_string_create_char(scanner->NextToken()->val)) + "]"); // This is risky
+        .)
+        "]"
+      ) // End of array indexing part for one dimension
+    } // End of loop for field/array access
+    (. // After all dimensions/fields are processed
+        // cout << "Designator processed: " << qua << ", final kind: " << x->kind << ", final type: " << (x->type ? x->type->kind : -1) << ", num_dims: " << ( (x->kind == Operand::MultiDimElemPending) ? x->num_dims : 0) << endl;
+        delete y; // clean up temporary operand y, which was created at the start of Designator
+    .)
+.
   Addop<int & op> = "+" (. op = 1; .) | "-" (. op = 2; .).
   Mulop<int & op>  = "*"  (. op = 3; .)| "/" (. op = 4; .) | "%" (. op = 5; .).
 

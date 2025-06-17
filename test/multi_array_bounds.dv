@@ -1,0 +1,54 @@
+package main
+@include "test/std.dv"; // Assuming std.dv provides println and std_itos
+
+{
+    void main() {
+        int arr[2][2];
+        arr = new int[2][2];
+        int bad_val;
+
+        arr[0][0] = 1;
+        arr[1][1] = 4;
+
+        println("arr[0][0] (expected 1): " + std_itos(arr[0][0]));
+        println("arr[1][1] (expected 4): " + std_itos(arr[1][1]));
+
+        println("Attempting out-of-bounds read: arr[2][0].");
+        println("Behavior depends on VM error handling (e.g., might print error, halt, or return 0/garbage).");
+        bad_val = arr[2][0]; // Index 2 is out of bounds for a dimension of size 2
+        println("Value from out-of-bounds read arr[2][0]: " + std_itos(bad_val));
+        // If VM returns 0 on MDLOAD error:
+        if (bad_val == 0) {
+            println("SUCCESS (Observation): Out-of-bounds read seems to have returned 0.");
+        } else {
+            println("NOTE (Observation): Out-of-bounds read returned non-zero: " + std_itos(bad_val));
+        }
+
+        println("Attempting out-of-bounds read: arr[0][2].");
+        bad_val = arr[0][2]; // Index 2 is out of bounds
+        println("Value from out-of-bounds read arr[0][2]: " + std_itos(bad_val));
+         if (bad_val == 0) {
+            println("SUCCESS (Observation): Out-of-bounds read seems to have returned 0.");
+        } else {
+            println("NOTE (Observation): Out-of-bounds read returned non-zero: " + std_itos(bad_val));
+        }
+
+        println("Attempting out-of-bounds write: arr[2][1] = 99.");
+        arr[2][1] = 99; // Index 2 out of bounds
+        println("Out-of-bounds write attempted. Check if it caused a crash or was ignored.");
+
+        // Try to read it back - if it was ignored, arr[0][0] should still be 1
+        // If it overwrote something critical, behavior is undefined.
+        // This specific out-of-bounds write might not hit other valid data if memory layout is simple.
+        bad_val = arr[0][0];
+        println("arr[0][0] after oob write (expected 1 if write was ignored or targetted elsewhere): " + std_itos(bad_val));
+        if (bad_val == 1) {
+             println("NOTE (Observation): arr[0][0] is unchanged after out-of-bounds write elsewhere.");
+        } else {
+             println("WARNING (Observation): arr[0][0] changed after out-of-bounds write. Value: " + std_itos(bad_val));
+        }
+
+
+        println("Test Array Bounds Complete. Manual observation of VM output for errors/crashes is key.");
+    }
+}

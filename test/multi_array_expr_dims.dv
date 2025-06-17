@@ -1,0 +1,36 @@
+package main
+@include "test/std.dv"; // Assuming std.dv provides println and std_itos
+
+{
+    void main() {
+        int arr[1][1]; // Placeholder, will be reassigned
+        int s1, s2, idx1, idx2;
+
+        println("Testing array with dimension sizes from expressions...");
+        s1 = 2;
+        s2 = 3;
+        arr = new int[s1][s2]; // arr should be 2x3
+
+        arr[0][0] = 10;
+        arr[0][1] = 11;
+        arr[0][2] = 12;
+        arr[1][0] = 20;
+        arr[1][1] = 21;
+        arr[1][2] = 22;
+
+        println("arr[0][0] (expected 10): " + std_itos(arr[0][0]));
+        println("arr[1][2] (expected 22): " + std_itos(arr[1][2]));
+
+        println("Testing array access with indices from expressions...");
+        idx1 = 1;
+        idx2 = 0;
+        arr[idx1][idx2] = 55; // arr[1][0] = 55
+        println("arr[idx1][idx2] where idx1=1, idx2=0 (expected 55): " + std_itos(arr[idx1][idx2]));
+
+        int val_check;
+        val_check = arr[s1-1][s2-2]; // arr[1][1]
+        println("arr[s1-1][s2-2] (expected 21): " + std_itos(val_check));
+
+        println("Test Array with Expression Dims/Indices Complete.");
+    }
+}
