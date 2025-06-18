@@ -9,7 +9,9 @@
 #include "../parser_params/Scanner.h"
 #include "../parser_params/Parser.h"
 #include "generate/symbol_table/symbol_table.h"
-#include "generate/code_generator/code_generator.h"
+// #include "generate/code_generator/code_generator.h" // Removed
+#include "generate/ICodeGenerator.h" // Added
+#include <memory> // Added
 
 namespace DVLANG
 {
@@ -27,9 +29,9 @@ class Compiler
 
   private:
     DVLANG::COMPILER_::GENERATE::SymbolTable * tab; 
-    DVLANG::COMPILER_::GENERATE::CodeGenerator * code; 
+    std::unique_ptr<DVLANG::COMPILER_::GENERATE::ICodeGenerator> code_generator_; // Changed member
 };
-}; // namespace COMPILER
+}; // namespace COMPILER_
 } // namespace DVLANG
 
 #endif

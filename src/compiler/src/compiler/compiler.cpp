@@ -1,6 +1,7 @@
 
 
 #include "compiler.h"
+#include "generate/DvVmCodeGenerator.h" // Added
 //#include <native.cpp>
 
 using namespace PARSER;
@@ -63,13 +64,18 @@ Compiler::Compiler(int argc, char **args)
                     Parser *parser = new Parser(scanner); */
 
             tab = new DVLANG::COMPILER_::GENERATE::SymbolTable();
-            code = new DVLANG::COMPILER_::GENERATE::CodeGenerator();
+            // code = new DVLANG::COMPILER_::GENERATE::CodeGenerator(); // Old
+            code_generator_ = std::make_unique<DVLANG::COMPILER_::GENERATE::DvVmCodeGenerator>();
+            code_generator_->initialize(tab);
 
-            PARSER::Parser * p = parse(p_params->params->input);
 
-            CodeGenerator::globals = SymbolTable::globals;
+            PARSER::Parser * p = parse(p_params->params->input); // This will set p->code via Compiler::parse
 
-            p->code->write(p_params->params->output,tab->lib_symbols);
+            // CodeGenerator::globals = SymbolTable::globals; // Removed - handled by DvVmCodeGenerator internally if needed
+
+            // p->code points to code_generator_ (if Compiler::parse is updated correctly)
+            // So, using code_generator_ directly is clearer.
+            code_generator_->writeOutput(p_params->params->output, tab->lib_symbols);
            
             //tab->lib_symbols->dump();
         }
@@ -85,10 +91,11 @@ PARSER::Parser *Compiler::parse(string filename)
 {
     wchar_t *fileName = coco_string_create(filename.c_str());
     Scanner *scanner = new Scanner(fileName);
+    // Parser constructor will need to accept ICodeGenerator*
     Parser *parser = new Parser(scanner);
 
-    parser->tab = tab;
-    parser->code = code;
+    parser->tab = tab; // Assign compiler's tab
+    parser->code = code_generator_.get(); // Assign compiler's code generator instance
 
     parser->_p = (void *)_parse;
 
@@ -106,14 +113,36 @@ PARSER::Parser *Compiler::parse(string filename)
 
 Compiler::Compiler(char *filename)
 {
+    // Initialize Compiler's own symbol table and code generator
+    this->tab = new DVLANG::COMPILER_::GENERATE::SymbolTable();
+    this->code_generator_ = std::make_unique<DVLANG::COMPILER_::GENERATE::DvVmCodeGenerator>();
+    this->code_generator_->initialize(this->tab);
 
-    wchar_t *fileName = coco_string_create(filename);
-    Scanner *scanner = new Scanner(fileName);
+    // The Scanner now takes const char* filename directly in its constructor typically.
+    // If Scanner still needs wchar_t*, coco_string_create is fine.
+    // Assuming Scanner can handle `filename` directly or via coco_string_create if necessary.
+    wchar_t *wc_fileName = coco_string_create(filename); // Keep if Scanner needs wchar_t*
+    Scanner *scanner = new Scanner(wc_fileName); // Or new Scanner(filename) if API changed
+
     Parser *parser = new Parser(scanner);
-    parser->tab = new DVLANG::COMPILER_::GENERATE::SymbolTable();
+    parser->tab = this->tab; // Parser uses Compiler's symbol table
+    parser->code = this->code_generator_.get(); // Parser uses Compiler's code generator
+
+    // It seems _parse assignment might be missing here compared to the other parse method
+    // parser->_p = (void *)_parse; // If this constructor also supports include directives
 
     parser->Parse();
     cout << "errores: " << parser->errors->count << endl;
+
+    if (parser->errors->count == 0) {
+        // Determine output filename, e.g., input filename + ".dvc"
+        string output_filename = string(filename) + ".dvc";
+        this->code_generator_->writeOutput(output_filename, this->tab->lib_symbols);
+        cout << "Compilation successful. Output: " << output_filename << endl;
+    } else {
+        cout << "Compilation failed." << endl;
+    }
+    // coco_string_delete(wc_fileName); // Clean up wchar_t string if created
 };
 } // namespace COMPILER_
 } // namespace DVLANG
